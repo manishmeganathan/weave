@@ -1,4 +1,4 @@
-package animus
+package blockchain
 
 import (
 	"log"
@@ -27,8 +27,13 @@ func NewBlockChain() *BlockChain {
 	// Declare a slice a bytes to collect the hash value
 	var lasthash []byte
 
-	// Open the Badger DB with the default option and db path
-	db, err := badger.Open(badger.DefaultOptions(dbpath))
+	// Define the BadgerDB options for the DB path
+	opts := badger.DefaultOptions(dbpath)
+	// Switch off the Badger Logger
+	opts.Logger = nil
+
+	// Open the Badger DB with the defined options
+	db, err := badger.Open(opts)
 	// Handle any potential error
 	Handle(err)
 

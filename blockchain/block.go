@@ -1,4 +1,4 @@
-package animus
+package blockchain
 
 import (
 	"bytes"
