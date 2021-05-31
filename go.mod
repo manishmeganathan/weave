@@ -1,4 +1,4 @@
-module github.com/manishmeganathan/animus-blockchain
+module github.com/manishmeganathan/animus
 
 go 1.16
 
