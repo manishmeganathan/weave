@@ -276,3 +276,41 @@ func (chain *BlockChain) AccumulateUTXO(address string) []TxOutput {
 	// Return the accumulated unspent transaction outputs
 	return unspenttxos
 }
+
+// A method of BlockChain that accumulates unspent transaction outputs for a given
+// address until a given amount and returns the accumulated amount and the map of
+// transaction output IDs to their output index on the transaction.
+func (chain *BlockChain) AccumulateSpendableTXO(address string, amount int) (int, map[string][]int) {
+	// Declare a map to collect unspent transaction outputs
+	unspenttxos := make(map[string][]int)
+	// Accumulate the unspent transactions of the address
+	unspenttxns := chain.AccumulateUTXN(address)
+	// Declare an integer to accumulate output values
+	accumulated := 0
+
+Work:
+	// Iterate over the unspent transactions
+	for _, tx := range unspenttxns {
+		// Encode the transaction hash into a string
+		txid := hex.EncodeToString(tx.ID)
+
+		// Iterate over the transaction outputs
+		for outindex, output := range tx.Outputs {
+			// Check if the output can be unlocked by the address and if the accumulated value is less than the amount
+			if output.CanBeUnlocked(address) && accumulated < amount {
+				// Add the value of the transaction output to the accumulation
+				accumulated += output.Value
+				// Add the transaction output id and index to the unspent transaction output map
+				unspenttxos[txid] = append(unspenttxos[txid], outindex)
+
+				// Check if the accumulated value has exceeded the amount
+				if accumulated >= amount {
+					break Work
+				}
+			}
+		}
+	}
+
+	// Return the accumulated value and the map of transaction outputs to their indexes
+	return accumulated, unspenttxos
+}
