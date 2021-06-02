@@ -6,9 +6,12 @@ import (
 	"errors"
 	"log"
 	"os"
+
+	"github.com/dgraph-io/badger"
 )
 
 const dbfile = "./db/blocks/MANIFEST"
+const dbpath = "./db/blocks"
 
 // A function that generates and returns the
 // Hex/Bytes representation of an int64
@@ -43,4 +46,20 @@ func DBexists() bool {
 
 	// Return true if the file exists
 	return true
+}
+
+// A function to open the BadgerDB
+func DBopen() *badger.DB {
+	// Define the BadgerDB options for the DB path
+	opts := badger.DefaultOptions(dbpath)
+	// Switch off the Badger Logger
+	opts.Logger = nil
+
+	// Open the Badger DB with the defined options
+	db, err := badger.Open(opts)
+	// Handle any potential error
+	Handle(err)
+
+	// Return the DB
+	return db
 }
