@@ -3,10 +3,8 @@ package blockchain
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/binary"
 	"encoding/gob"
 	"fmt"
-	"log"
 	"math"
 	"math/big"
 )
@@ -152,29 +150,6 @@ func (block *Block) Validate() bool {
 	// If the hash of the block data with the given nonce is
 	// less than the proof target, the block signature is valid.
 	return inthash.Cmp(block.GenerateProofTarget()) == -1
-}
-
-// A function that generates and returns the
-// Hex/Bytes representation of an int64
-func Hexify(number int64) []byte {
-	// Construct a new binary buffer
-	buff := new(bytes.Buffer)
-	// Write the number as a binary into the buffer in Big Endian order
-	err := binary.Write(buff, binary.BigEndian, number)
-	// Handle any potential error
-	Handle(err)
-
-	// Return the bytes from the binary buffer
-	return buff.Bytes()
-}
-
-// A function to handle errors.
-func Handle(err error) {
-	// Check if error is non null
-	if err != nil {
-		// Log the error and throw a panic
-		log.Panic(err)
-	}
 }
 
 // A function to serialize a Block into gob of bytes
