@@ -96,7 +96,8 @@ func (ws *WalletStore) Save() {
 func (ws *WalletStore) Load() error {
 	// Check if the walletstore file exists
 	if _, err := os.Stat(walletdb); errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("no walletstore file found")
+		// If the file does not exist. Save the current state of the walletstore into a file
+		ws.Save()
 	}
 
 	// Declare a WalletStore object
