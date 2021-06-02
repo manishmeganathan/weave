@@ -51,8 +51,8 @@ func (tx *Transaction) GenerateID() {
 }
 
 // A constructor function that generates and returns a coinbase Transaction.
-// A Coinbase transaction refers to a transaction that does not refer to any previous
-// output transaction and contains a token reward for the user who signs the block.
+// A Coinbase transaction refers to a first transaction on a block and does not refer to any
+// previous output transactions and contains a token reward for the user who signs the block.
 func NewCoinbaseTransaction(to, data string) *Transaction {
 	// Check if the data passed is null
 	if data == "" {
