@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/manishmeganathan/animus/cli"
+	"github.com/manishmeganathan/animus/cmd"
 )
 
 func main() {
@@ -14,5 +14,5 @@ func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	log.SetPrefix("animus ")
 
-	cli.Execute()
+	cmd.Execute()
 }
