@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"encoding/hex"
 	"fmt"
 	"log"
 
@@ -184,4 +185,94 @@ func (iter *BlockChainIterator) Next() *Block {
 	iter.CursorHash = block.PrevHash
 	// Return the block
 	return &block
+}
+
+// A method of BlockChain that accumulates all unspent transaction
+// for a given address and returns them as a slice of Transactions.
+func (chain *BlockChain) AccumulateUTXN(address string) []Transaction {
+	// Define the slice of unspent transactions
+	var unspenttxns []Transaction
+	// Define a map to store spent transaction outputs
+	spenttxos := make(map[string][]int)
+
+	// Get an iterator for the blockchain and iterate over its block
+	iter := NewIterator(chain)
+	for {
+		// Get a block from the iterator
+		block := iter.Next()
+
+		// Iterate over the transactions in the block
+		for _, tx := range block.Transactions {
+			// Encode the transaction hash into a string
+			txid := hex.EncodeToString(tx.ID)
+
+		Outputs:
+			// Iterate over the transaction's outputs
+			for outindex, output := range tx.Outputs {
+				// Check if the transaction outputs have been spent
+				if spenttxos[txid] != nil {
+					// Iterate over the index of the spent transaction outputs
+					for _, spentout := range spenttxos[txid] {
+						// Check if the spent transaction output is the current transaction output
+						if spentout == outindex {
+							// Break from loop and check next transaction output
+							continue Outputs
+						}
+					}
+				}
+
+				// Check if the transaction output can be unlocked for the given address
+				if output.CanBeUnlocked(address) {
+					// Add it to the list of unspent transactions
+					unspenttxns = append(unspenttxns, *tx)
+				}
+			}
+
+			// Check if the transaction is a coinbase transaction
+			if !tx.IsCoinbaseTx() {
+				// Iterate over the transaction's inputs
+				for _, input := range tx.Inputs {
+					// Check if the transaction input can unlock for the given address
+					if input.CanUnlock(address) {
+						// Encode the ID of the transaction input (hash of the reference transaction output)
+						inputtxid := hex.EncodeToString(input.ID)
+						// Add the output index of the transaction input to spent transactions map
+						spenttxos[inputtxid] = append(spenttxos[inputtxid], input.OutIndex)
+					}
+				}
+			}
+		}
+
+		// Check if the block is the genesis block and break from the loop
+		if len(block.PrevHash) == 0 {
+			break
+		}
+	}
+
+	// Return the accumulated unspent transactions
+	return unspenttxns
+}
+
+// A method of BlockChain that accumulates all unspent transaction outputs.
+// for a given address and returns them as a slice of TxOutputs.
+func (chain *BlockChain) AccumulateUTXO(address string) []TxOutput {
+	// Declare a slice of transaction outputs
+	var unspenttxos []TxOutput
+	// Accumulate the unspent transactions of the address
+	unspenttxns := chain.AccumulateUTXN(address)
+
+	// Iterate over the unspent transactions
+	for _, tx := range unspenttxns {
+		// Iterate over transaction's outputs
+		for _, output := range tx.Outputs {
+			// Check if the transaction ouput can be unlocked by the address
+			if output.CanBeUnlocked(address) {
+				// Add the unspent transaction output to the list
+				unspenttxos = append(unspenttxos, output)
+			}
+		}
+	}
+
+	// Return the accumulated unspent transaction outputs
+	return unspenttxos
 }
