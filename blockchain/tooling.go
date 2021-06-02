@@ -10,8 +10,8 @@ import (
 	"github.com/dgraph-io/badger"
 )
 
-const dbfile = "./db/blocks/MANIFEST"
-const dbpath = "./db/blocks"
+const dbfile = "./tmp/db/blocks/MANIFEST"
+const dbpath = "./tmp/db/blocks"
 
 // A function that generates and returns the
 // Hex/Bytes representation of an int64
