@@ -15,23 +15,23 @@ const WorkDifficulty = 18
 
 // A structure that represents a single Block on the Animus BlockChain
 type Block struct {
-	Hash       []byte // Represents the hash of the Block
-	Data       []byte // Represents the data of the Block
-	PrevHash   []byte // Represents the hash of the previous Block
-	Nonce      int    // Represents the nonce number that signed the block
-	Difficulty int    // Represent the difficulty value to sign the block
+	Hash         []byte         // Represents the hash of the Block
+	PrevHash     []byte         // Represents the hash of the previous Block
+	Transactions []*Transaction // Represents the transaction on the Block
+	Nonce        int            // Represents the nonce number that signed the block
+	Difficulty   int            // Represent the difficulty value to sign the block
 }
 
 // A constructor function that generates and returns a new
 // block from th hash of the previous block and a block data.
 // Adds the data to a block and signs it using the PoW algorithm.
-func NewBlock(data string, prevHash []byte) *Block {
+func NewBlock(txs []*Transaction, prevHash []byte) *Block {
 	// Construct a new Block and assign the block data, the
 	// hash of the previous block and the block difficulty
 	block := Block{
-		Data:       []byte(data),
-		PrevHash:   prevHash,
-		Difficulty: WorkDifficulty,
+		Transactions: txs,
+		PrevHash:     prevHash,
+		Difficulty:   WorkDifficulty,
 	}
 
 	// Run the PoW algorithm to sign the block
@@ -46,26 +46,21 @@ func NewBlock(data string, prevHash []byte) *Block {
 	return &block
 }
 
-// A method of Block that composes and returns the block
-// data as slice of bytes for a given nonce number.
-//
-// Considers the block data, the hash of the previous block,
-// the block work difficulty and the given nonce number.
-func (block *Block) Compose(nonce int) []byte {
-	// Combine the block data, the previous block hash, the
-	// given nonce number and the block's work difficulty
-	data := bytes.Join(
-		[][]byte{
-			block.PrevHash,
-			block.Data,
-			Hexify(int64(nonce)),
-			Hexify(int64(block.Difficulty)),
-		},
-		[]byte{},
-	)
+// A method of Block that generates the hash of all transaction on the block
+func (block *Block) GenerateTransactionsHash() []byte {
+	// Declare a 2D slice of bytes
+	var txhashes [][]byte
 
-	// Return the composed data
-	return data
+	// Iterate over the transactions of the Block
+	for _, tx := range block.Transactions {
+		// Append each transaction's ID (hash)
+		txhashes = append(txhashes, tx.ID)
+	}
+
+	// Join all the transaction hashes together and hash that value
+	txhash := sha256.Sum256(bytes.Join(txhashes, []byte{}))
+	// Return the transactions hash
+	return txhash[:]
 }
 
 // A method of Block that generates the max value of
@@ -79,6 +74,28 @@ func (block *Block) GenerateProofTarget() *big.Int {
 
 	// Return the hash target
 	return targethash
+}
+
+// A method of Block that composes and returns the block
+// data as slice of bytes for a given nonce number.
+//
+// Considers the block data, the hash of the previous block,
+// the block work difficulty and the given nonce number.
+func (block *Block) Compose(nonce int) []byte {
+	// Combine the block data, the previous block hash, the
+	// given nonce number and the block's work difficulty
+	data := bytes.Join(
+		[][]byte{
+			block.PrevHash,
+			block.GenerateTransactionsHash(),
+			Hexify(int64(nonce)),
+			Hexify(int64(block.Difficulty)),
+		},
+		[]byte{},
+	)
+
+	// Return the composed data
+	return data
 }
 
 // A method of Block that runs the Proof of Work algorithm
