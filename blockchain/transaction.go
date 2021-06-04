@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"strings"
 
 	"github.com/manishmeganathan/animus/wallet"
 )
@@ -128,6 +129,30 @@ func (txn *Transaction) GenerateTrimCopy() Transaction {
 	txncopy := Transaction{ID: txn.ID, Inputs: inputs, Outputs: txn.Outputs}
 	// Return the trimmed transaction
 	return txncopy
+}
+
+// A method of Transaction that generates a string representation
+// of the transaction and all its inputs and outputs.
+func (txn *Transaction) String() string {
+	lines := []string{fmt.Sprintf("--- Transaction %x:", txn.ID)}
+
+	for i, input := range txn.Inputs {
+		lines = append(lines, fmt.Sprintf("     Input %d:", i))
+		lines = append(lines, fmt.Sprintf("       TXID:     %x", input.ID))
+		lines = append(lines, fmt.Sprintf("       Out:       %d", input.OutIndex))
+		lines = append(lines, fmt.Sprintf("       Signature: %x", input.Signature))
+		lines = append(lines, fmt.Sprintf("       PubKey:    %x", input.PublicKey))
+	}
+
+	lines = append(lines, "\n")
+
+	for i, output := range txn.Outputs {
+		lines = append(lines, fmt.Sprintf("     Output %d:", i))
+		lines = append(lines, fmt.Sprintf("       Value:  %d", output.Value))
+		lines = append(lines, fmt.Sprintf("       Script: %x", output.PublicKeyHash))
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 // A method of Transaction that signs the transaction given the private key
