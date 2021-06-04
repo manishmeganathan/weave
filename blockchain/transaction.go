@@ -29,12 +29,20 @@ func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction
 	// Declare slices of transaction outputs and inputs
 	var txinputs []TxInput
 	var txoutputs []TxOutput
-	// Accumulate the spendable transaction outputs of the account up to the given amount
-	accumulated, validoutputs := chain.AccumulateSpendableTXO(from, amount)
+
+	// Create the wallet store
+	walletstore := wallet.NewWalletStore()
+	// Fetch the wallet from the wallet store for the given address
+	w := walletstore.FetchWallet(from)
+
+	// Generate the public key hash for the wallet's public key
+	publickeyhash := wallet.GeneratePublicKeyHash(w.PublicKey)
+	// Accumulate the spendable transaction outputs of the account up to the given amount with the public key hash
+	accumulated, validoutputs := chain.AccumulateSpendableTXO(publickeyhash, amount)
 
 	// Check if the account has enough funds
 	if accumulated < amount {
-		log.Panic("Error: Insufficient Funds!")
+		log.Panic("error: insufficient funds!")
 	}
 
 	// Iterate over the spendable transaction output IDs
@@ -47,25 +55,28 @@ func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction
 		// Iterate over the the output indexes
 		for _, output := range outputs {
 			// Create a transaction input with the transaction ID, output index and from address signature
-			input := TxInput{ID: txid, OutIndex: output, Signature: from}
+			input := TxInput{ID: txid, OutIndex: output, Signature: nil, PublicKey: w.PublicKey}
 			// Add the transaction input into the slice
 			txinputs = append(txinputs, input)
 		}
 	}
 
 	// Add a transaction output with the amount to the address
-	txoutputs = append(txoutputs, TxOutput{Value: amount, PublicKey: to})
+	txoutputs = append(txoutputs, *NewTxOutput(amount, to))
 
 	// Check if there is a balance in the accumulated amounted
 	if accumulated > amount {
 		// Add a transaction output with the balance amount back to the original sender
-		txoutputs = append(txoutputs, TxOutput{Value: accumulated - amount, PublicKey: from})
+		txoutputs = append(txoutputs, *NewTxOutput(accumulated-amount, from))
 	}
 
 	// Create a Transaction with the list of input and outputs
 	txn := Transaction{ID: nil, Inputs: txinputs, Outputs: txoutputs}
 	// Set the ID (hash) for the transaction
 	txn.ID = txn.GenerateHash()
+	// Sign the transaction using the wallet's private key
+	chain.SignTransaction(&txn, w.PrivateKey)
+
 	// Return the transaction
 	return &txn
 }
@@ -253,7 +264,7 @@ func (txn *Transaction) Verify(prevtxns map[string]Transaction) bool {
 		y.SetBytes(input.PublicKey[(keysize / 2):])
 
 		// Create an ECDSA public key from sepc256r1 curve and the x, y coordinates
-		rawpublickey := ecdsa.PublicKey{elliptic.P256(), &x, &y}
+		rawpublickey := ecdsa.PublicKey{Curve: elliptic.P256(), X: &x, Y: &y}
 
 		// Check if the transaction has been signed with the public key's private pair
 		if !ecdsa.Verify(&rawpublickey, txncopy.ID, &r, &s) {
@@ -306,11 +317,11 @@ type TxInput struct {
 }
 
 // A method of TxInput that checks if the input public key is valid for a given public key hash
-func (txin *TxInput) CheckKey(pubkeyhash []byte) bool {
+func (txin *TxInput) CheckKey(publickeyhash []byte) bool {
 	// Generate the hash of the input public key
 	lockhash := wallet.GeneratePublicKeyHash(txin.PublicKey)
 	// Check if the locking hash is equal to the given hash
-	return bytes.Equal(lockhash, pubkeyhash)
+	return bytes.Equal(lockhash, publickeyhash)
 }
 
 // A structure that represents the outputs in a transaction
