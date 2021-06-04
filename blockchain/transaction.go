@@ -149,19 +149,19 @@ func (txn *Transaction) String() string {
 
 	for i, input := range txn.Inputs {
 		lines = append(lines, fmt.Sprintf("     Input %d:", i))
-		lines = append(lines, fmt.Sprintf("       TXID:     %x", input.ID))
+		lines = append(lines, fmt.Sprintf("       TxnID:     %x", input.ID))
 		lines = append(lines, fmt.Sprintf("       Out:       %d", input.OutIndex))
 		lines = append(lines, fmt.Sprintf("       Signature: %x", input.Signature))
 		lines = append(lines, fmt.Sprintf("       PubKey:    %x", input.PublicKey))
 	}
-
-	lines = append(lines, "\n")
 
 	for i, output := range txn.Outputs {
 		lines = append(lines, fmt.Sprintf("     Output %d:", i))
 		lines = append(lines, fmt.Sprintf("       Value:  %d", output.Value))
 		lines = append(lines, fmt.Sprintf("       Script: %x", output.PublicKeyHash))
 	}
+
+	lines = append(lines, "---")
 
 	return strings.Join(lines, "\n")
 }
