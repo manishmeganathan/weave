@@ -1,6 +1,8 @@
 package blockchain
 
 import (
+	"bytes"
+	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -313,4 +315,74 @@ Work:
 
 	// Return the accumulated value and the map of transaction outputs to their indexes
 	return accumulated, unspenttxos
+}
+
+// A method of BlockChain that finds a transaction
+// from the chain given a valid Transaction ID
+func (chain *BlockChain) FindTransaction(txnid []byte) (Transaction, error) {
+
+	// Get an iterator for the blockchain and iterate over its block
+	iter := NewIterator(chain)
+	for {
+		// Get a block from the iterator
+		block := iter.Next()
+
+		// Iterate over the transactions of the block
+		for _, txn := range block.Transactions {
+			// Check if the transaction ID matches
+			if bytes.Equal(txn.ID, txnid) {
+				// Return the transaction with a nil error
+				return *txn, nil
+			}
+		}
+
+		// Check if the block is last block on the chain
+		if len(block.PrevHash) == 0 {
+			break
+		}
+	}
+
+	// Return a nil Transaction with an error
+	return Transaction{}, fmt.Errorf("transaction does not exist")
+}
+
+// A method of BlockChain that signs a transaction given a private key
+func (chain *BlockChain) SignTransaction(txn *Transaction, privatekey ecdsa.PrivateKey) {
+	// Create a map of transaction IDs to Transactions
+	prevtxns := make(map[string]Transaction)
+
+	// Iterate over the inputs of the transaction
+	for _, input := range txn.Inputs {
+		// Find the Transaction with ID on the input from the blockchain
+		prevtxn, err := chain.FindTransaction(input.ID)
+		// Handle any potential errors
+		Handle(err)
+
+		// Add the transaction to the map
+		prevtxns[hex.EncodeToString(prevtxn.ID)] = prevtxn
+	}
+
+	// Sign the transaction with the map of previous
+	// transactions and the ECDSA private key
+	txn.Sign(privatekey, prevtxns)
+}
+
+// A method of BlockChain that verifies the signature of a transaction given a private key
+func (chain *BlockChain) VerifyTransaction(txn *Transaction, privatekey ecdsa.PrivateKey) bool {
+	// Create a map of transaction IDs to Transactions
+	prevtxns := make(map[string]Transaction)
+
+	// Iterate over the inputs of the transaction
+	for _, input := range txn.Inputs {
+		// Find the Transaction with ID on the input from the blockchain
+		prevtxn, err := chain.FindTransaction(input.ID)
+		// Handle any potential errors
+		Handle(err)
+
+		// Add the transaction to the map
+		prevtxns[hex.EncodeToString(prevtxn.ID)] = prevtxn
+	}
+
+	// Verify the transaction signature and return the result
+	return txn.Verify(prevtxns)
 }
