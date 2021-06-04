@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -53,9 +54,9 @@ func GenerateDoubleHash(payload []byte) []byte {
 	return secondlayer[:]
 }
 
-// A function that trunctuates a given hash to the given length (in number of bytes)
+// A function that truncates a given hash to the given length (in number of bytes)
 // Returns the leftmost bytes of the original hash.
-func TruncuateHash(hash []byte, length int) []byte {
+func TruncateHash(hash []byte, length int) []byte {
 	return hash[:length]
 }
 
@@ -75,4 +76,23 @@ func Base58Decode(encodeddata []byte) []byte {
 	Handle(err)
 	// Return the decoded bytes
 	return decode
+}
+
+// A function that validates a given address by isolating its
+// components and comparing the checksum of the address.
+func ValidateWalletAddress(address string) bool {
+	// Decode the address from base58 to get the public hash of the address
+	publichash := Base58Decode([]byte(address))
+
+	// Isolate the checksum from the public hash
+	checksum := publichash[len(publichash)-4:]
+	// Isolate the version from the public hash
+	version := publichash[0]
+	// Isolate the public key hash from the full public hash
+	publichash = publichash[1 : len(publichash)-4]
+
+	// Generate a new checksum from the version and public key hash
+	targetsum := GeneratePublicKeyChecksum(append([]byte{version}, publichash...))
+	// Check if the new checksum is equal to the check sum of the given address
+	return bytes.Equal(checksum, targetsum)
 }
