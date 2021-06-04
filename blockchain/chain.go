@@ -189,9 +189,9 @@ func (iter *BlockChainIterator) Next() *Block {
 	return &block
 }
 
-// A method of BlockChain that accumulates all unspent transaction
-// for a given address and returns them as a slice of Transactions.
-func (chain *BlockChain) AccumulateUTXN(address string) []Transaction {
+// A method of BlockChain that accumulates all unspent transaction for
+// a given public key hash and returns them as a slice of Transactions.
+func (chain *BlockChain) AccumulateUTXN(publickeyhash []byte) []Transaction {
 	// Define the slice of unspent transactions
 	var unspenttxns []Transaction
 	// Define a map to store spent transaction outputs
@@ -224,18 +224,18 @@ func (chain *BlockChain) AccumulateUTXN(address string) []Transaction {
 				}
 
 				// Check if the transaction output can be unlocked for the given address
-				if output.CanBeUnlocked(address) {
+				if output.CheckLock(publickeyhash) {
 					// Add it to the list of unspent transactions
 					unspenttxns = append(unspenttxns, *tx)
 				}
 			}
 
 			// Check if the transaction is a coinbase transaction
-			if !tx.IsCoinbaseTx() {
+			if !tx.IsCoinbaseTxn() {
 				// Iterate over the transaction's inputs
 				for _, input := range tx.Inputs {
 					// Check if the transaction input can unlock for the given address
-					if input.CanUnlock(address) {
+					if input.CheckKey(publickeyhash) {
 						// Encode the ID of the transaction input (hash of the reference transaction output)
 						inputtxid := hex.EncodeToString(input.ID)
 						// Add the output index of the transaction input to spent transactions map
@@ -257,18 +257,18 @@ func (chain *BlockChain) AccumulateUTXN(address string) []Transaction {
 
 // A method of BlockChain that accumulates all unspent transaction outputs.
 // for a given address and returns them as a slice of TxOutputs.
-func (chain *BlockChain) AccumulateUTXO(address string) []TxOutput {
+func (chain *BlockChain) AccumulateUTXO(publickeyhash []byte) []TxOutput {
 	// Declare a slice of transaction outputs
 	var unspenttxos []TxOutput
 	// Accumulate the unspent transactions of the address
-	unspenttxns := chain.AccumulateUTXN(address)
+	unspenttxns := chain.AccumulateUTXN(publickeyhash)
 
 	// Iterate over the unspent transactions
 	for _, tx := range unspenttxns {
 		// Iterate over transaction's outputs
 		for _, output := range tx.Outputs {
 			// Check if the transaction ouput can be unlocked by the address
-			if output.CanBeUnlocked(address) {
+			if output.CheckLock(publickeyhash) {
 				// Add the unspent transaction output to the list
 				unspenttxos = append(unspenttxos, output)
 			}
@@ -282,11 +282,11 @@ func (chain *BlockChain) AccumulateUTXO(address string) []TxOutput {
 // A method of BlockChain that accumulates unspent transaction outputs for a given
 // address until a given amount and returns the accumulated amount and the map of
 // transaction output IDs to their output index on the transaction.
-func (chain *BlockChain) AccumulateSpendableTXO(address string, amount int) (int, map[string][]int) {
+func (chain *BlockChain) AccumulateSpendableTXO(publickeyhash []byte, amount int) (int, map[string][]int) {
 	// Declare a map to collect unspent transaction outputs
 	unspenttxos := make(map[string][]int)
 	// Accumulate the unspent transactions of the address
-	unspenttxns := chain.AccumulateUTXN(address)
+	unspenttxns := chain.AccumulateUTXN(publickeyhash)
 	// Declare an integer to accumulate output values
 	accumulated := 0
 
@@ -299,7 +299,7 @@ Work:
 		// Iterate over the transaction outputs
 		for outindex, output := range tx.Outputs {
 			// Check if the output can be unlocked by the address and if the accumulated value is less than the amount
-			if output.CanBeUnlocked(address) && accumulated < amount {
+			if output.CheckLock(publickeyhash) && accumulated < amount {
 				// Add the value of the transaction output to the accumulation
 				accumulated += output.Value
 				// Add the transaction output id and index to the unspent transaction output map
