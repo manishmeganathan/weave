@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/manishmeganathan/animus/blockchain"
+	"github.com/manishmeganathan/animus/wallet"
 	"github.com/spf13/cobra"
 )
 
@@ -48,6 +50,12 @@ each block on the Animus Blockchain`,
 			fmt.Printf("Block Hash: %x\n", block.Hash)
 			fmt.Printf("Signed: %s\n\n", strconv.FormatBool(block.Validate()))
 
+			for _, txn := range block.Transactions {
+				fmt.Println(txn.String())
+			}
+
+			fmt.Println()
+
 			if len(block.PrevHash) == 0 {
 				break
 			}
@@ -64,6 +72,10 @@ var chainCreateCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		address, _ := cmd.Flags().GetString("address")
+
+		if !wallet.ValidateWalletAddress(address) {
+			log.Panic("Invalid Address!")
+		}
 
 		chain, err := blockchain.SeedBlockChain(address)
 		if err != nil {

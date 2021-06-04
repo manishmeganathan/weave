@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/manishmeganathan/animus/blockchain"
+	"github.com/manishmeganathan/animus/wallet"
 	"github.com/spf13/cobra"
 )
 
@@ -21,6 +23,10 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		address, _ := cmd.Flags().GetString("address")
 
+		if !wallet.ValidateWalletAddress(address) {
+			log.Panic("Invalid Address!")
+		}
+
 		chain, err := blockchain.AnimateBlockChain()
 		if err != nil {
 			fmt.Println("Animus Blockchain does not exist! Use 'animus chain create' to create one.")
@@ -30,9 +36,11 @@ to quickly create a Cobra application.`,
 
 		defer chain.Database.Close()
 
-		balance := 0
-		unspenttxos := chain.AccumulateUTXO(address)
+		publickeyhash := wallet.Base58Decode([]byte(address))
+		publickeyhash = publickeyhash[1 : len(publickeyhash)-4]
+		unspenttxos := chain.AccumulateUTXO(publickeyhash)
 
+		balance := 0
 		for _, output := range unspenttxos {
 			balance += output.Value
 		}

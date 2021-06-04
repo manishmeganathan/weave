@@ -19,7 +19,8 @@ var rootCmd = &cobra.Command{
 	Long: `The Animus BlockChain Command-Line Interface
 
 A set of tools to manipulate the Animus Blockchain, such as adding
-new blocks and viewing exisiting blocks on the chain.`,
+new transactions, viewing exisiting blocks on the chain and interacting
+with Animus Wallets.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },

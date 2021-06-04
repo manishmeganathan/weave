@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/manishmeganathan/animus/blockchain"
+	"github.com/manishmeganathan/animus/wallet"
 	"github.com/spf13/cobra"
 )
 
@@ -19,6 +21,14 @@ Command requires the 'sender', 'reciever' and 'amount' flags`,
 		sender, _ := cmd.Flags().GetString("sender")
 		receiver, _ := cmd.Flags().GetString("receiver")
 		amount, _ := cmd.Flags().GetInt("amount")
+
+		if !wallet.ValidateWalletAddress(sender) {
+			log.Panic("Invalid Sender Address!")
+		}
+
+		if !wallet.ValidateWalletAddress(receiver) {
+			log.Panic("Invalid Receiver Address!")
+		}
 
 		chain, err := blockchain.AnimateBlockChain()
 		if err != nil {
@@ -44,8 +54,8 @@ func init() {
 	sendCmd.MarkFlagRequired("sender")
 
 	// Add the 'reciever' flag to the 'send' command and mark it as required
-	sendCmd.Flags().StringP("reciever", "r", "", "address of reciever")
-	sendCmd.MarkFlagRequired("reciever")
+	sendCmd.Flags().StringP("receiver", "r", "", "address of reciever")
+	sendCmd.MarkFlagRequired("receiver")
 
 	// Add the 'amount' flag to the 'send' command and mark it as required
 	sendCmd.Flags().IntP("amount", "a", 0, "amount to send")
