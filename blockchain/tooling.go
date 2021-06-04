@@ -3,6 +3,7 @@ package blockchain
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/gob"
 	"errors"
 	"log"
 	"os"
@@ -62,4 +63,97 @@ func DBopen() *badger.DB {
 
 	// Return the DB
 	return db
+}
+
+// A function to serialize a Block into gob of bytes
+func BlockSerialize(block *Block) []byte {
+	// Create a bytes buffer
+	var gobdata bytes.Buffer
+	// Create a new Gob encoder with the bytes buffer
+	encoder := gob.NewEncoder(&gobdata)
+	// Encode the Block into a gob
+	err := encoder.Encode(block)
+	// Handle any potential errors
+	Handle(err)
+
+	// Return the gob bytes
+	return gobdata.Bytes()
+}
+
+// A function to deserialize a gob of bytes into a Block
+func BlockDeserialize(gobdata []byte) *Block {
+	// Declare a Block variable
+	var block Block
+	// Create a new Gob decoder by reading the gob bytes
+	decoder := gob.NewDecoder(bytes.NewReader(gobdata))
+	// Decode the gob into a Block
+	err := decoder.Decode(&block)
+	// Handle any potential errors
+	Handle(err)
+
+	// Return the pointer to the Block
+	return &block
+}
+
+// A function to serialize a Transaction into gob of bytes
+func TxnSerialize(txn *Transaction) []byte {
+	// Create a bytes buffer
+	var gobdata bytes.Buffer
+
+	// Create a new Gob encoder with the bytes buffer
+	encoder := gob.NewEncoder(&gobdata)
+	// Encode the Transaction into a gob
+	err := encoder.Encode(txn)
+	// Handle any potential errors
+	Handle(err)
+
+	// Return the gob bytes
+	return gobdata.Bytes()
+}
+
+// A function to deserialize a gob of bytes into a Transaction
+func TxnDeserialize(gobdata []byte) *Transaction {
+	// Declare a Block variable
+	var txn Transaction
+	// Create a new Gob decoder by reading the gob bytes
+	decoder := gob.NewDecoder(bytes.NewReader(gobdata))
+	// Decode the gob into a Block
+	err := decoder.Decode(&txn)
+	// Handle any potential errors
+	Handle(err)
+
+	// Return the pointer to the Transaction
+	return &txn
+}
+
+// A function to serialize a UTXO into gob of bytes
+func TXOListSerialize(txos *TXOList) []byte {
+	// Create a bytes buffer
+	var gobdata bytes.Buffer
+
+	// Create a new Gob encoder with the bytes buffer
+	encoder := gob.NewEncoder(&gobdata)
+	// Encode the Transaction into a gob
+	err := encoder.Encode(txos)
+	// Handle any potential errors
+	Handle(err)
+
+	// Return the gob bytes
+	return gobdata.Bytes()
+}
+
+// A function to deserialize a gob of bytes into a UTXO
+func TXOListDeserialize(gobdata []byte) *TXOList {
+	// Declare a Block variable
+	var txos TXOList
+
+	// Create a new Gob decoder by reading the gob bytes
+	decoder := gob.NewDecoder(bytes.NewReader(gobdata))
+	// Decode the gob into a Block
+	err := decoder.Decode(&txos)
+	// Handle any potential errors
+	Handle(err)
+
+	// Return the pointer to the Transaction
+	return &txos
 }

@@ -3,7 +3,6 @@ package blockchain
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/gob"
 	"fmt"
 	"math"
 	"math/big"
@@ -150,34 +149,4 @@ func (block *Block) Validate() bool {
 	// If the hash of the block data with the given nonce is
 	// less than the proof target, the block signature is valid.
 	return inthash.Cmp(block.GenerateProofTarget()) == -1
-}
-
-// A function to serialize a Block into gob of bytes
-func BlockSerialize(block *Block) []byte {
-	// Create a bytes buffer
-	var gobdata bytes.Buffer
-	// Create a new Gob encoder with the bytes buffer
-	encoder := gob.NewEncoder(&gobdata)
-	// Encode the Block into a gob
-	err := encoder.Encode(block)
-	// Handle any potential errors
-	Handle(err)
-
-	// Return the gob bytes
-	return gobdata.Bytes()
-}
-
-// A function to deserialize a gob of bytes into a Block
-func BlockDeserialize(gobdata []byte) *Block {
-	// Declare a Block variable
-	var block Block
-	// Create a new Gob decoder by reading the gob bytes
-	decoder := gob.NewDecoder(bytes.NewReader(gobdata))
-	// Decode the gob into a Block
-	err := decoder.Decode(&block)
-	// Handle any potential errors
-	Handle(err)
-
-	// Return the pointer to the Block
-	return &block
 }

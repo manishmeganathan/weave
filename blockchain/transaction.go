@@ -6,7 +6,6 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -276,37 +275,6 @@ func (txn *Transaction) Verify(prevtxns map[string]Transaction) bool {
 	return true
 }
 
-// A function to serialize a Transaction into gob of bytes
-func TxnSerialize(txn *Transaction) []byte {
-	// Create a bytes buffer
-	var gobdata bytes.Buffer
-
-	// Create a new Gob encoder with the bytes buffer
-	encoder := gob.NewEncoder(&gobdata)
-	// Encode the Transaction into a gob
-	err := encoder.Encode(txn)
-	// Handle any potential errors
-	Handle(err)
-
-	// Return the gob bytes
-	return gobdata.Bytes()
-}
-
-// A function to deserialize a gob of bytes into a Transaction
-func TxnDeserialize(gobdata []byte) *Transaction {
-	// Declare a Block variable
-	var txn Transaction
-	// Create a new Gob decoder by reading the gob bytes
-	decoder := gob.NewDecoder(bytes.NewReader(gobdata))
-	// Decode the gob into a Block
-	err := decoder.Decode(&txn)
-	// Handle any potential errors
-	Handle(err)
-
-	// Return the pointer to the Transaction
-	return &txn
-}
-
 // A structure that represents the inputs in a transaction
 // which are really just references to previous outputs
 type TxInput struct {
@@ -329,6 +297,8 @@ type TxOutput struct {
 	Value         int    // Represents the token value of a given transaction output
 	PublicKeyHash []byte // Represents the hash of the public key of the recieving address
 }
+
+type TXOList []TxOutput
 
 // A constructor function
 func NewTxOutput(value int, address string) *TxOutput {
