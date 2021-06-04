@@ -92,7 +92,7 @@ func ValidateWalletAddress(address string) bool {
 	publichash = publichash[1 : len(publichash)-4]
 
 	// Generate a new checksum from the version and public key hash
-	targetsum := GeneratePublicKeyChecksum(append([]byte{version}, publichash...))
+	targetsum := GeneratePublicKeyCheckSum(append([]byte{version}, publichash...))
 	// Check if the new checksum is equal to the check sum of the given address
 	return bytes.Equal(checksum, targetsum)
 }
