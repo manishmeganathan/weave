@@ -2,11 +2,15 @@ package blockchain
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 	"log"
+	"math/big"
 
 	"github.com/manishmeganathan/animus/wallet"
 )
@@ -124,6 +128,116 @@ func (txn *Transaction) GenerateTrimCopy() Transaction {
 	txncopy := Transaction{ID: txn.ID, Inputs: inputs, Outputs: txn.Outputs}
 	// Return the trimmed transaction
 	return txncopy
+}
+
+// A method of Transaction that signs the transaction given the private key
+// of the wallet and a map of previous Transaction IDs to their Transactions.
+func (txn *Transaction) Sign(privatekey ecdsa.PrivateKey, prevtxns map[string]Transaction) {
+	// Check if the transaction is a coinbase (cannot sign coinbase txns)
+	if txn.IsCoinbaseTxn() {
+		return
+	}
+
+	// Iterate over the transaction inputs
+	for _, input := range txn.Inputs {
+		// Check if the previous transactions value is consistent
+		if prevtxns[hex.EncodeToString(input.ID)].ID == nil {
+			Handle(fmt.Errorf("error: previous transaction is not correct"))
+		}
+	}
+
+	// Generate a trim copy of the transaction
+	txncopy := txn.GenerateTrimCopy()
+
+	// Iterate over the inputs of the trimmed transaction
+	for inpindex, input := range txncopy.Inputs {
+		// Retrive the corresponding the previous transaction
+		prevtxn := prevtxns[hex.EncodeToString(input.ID)]
+
+		// Set the input signature to nil
+		txncopy.Inputs[inpindex].Signature = nil
+		// Set the input public key with the public key hash from the prev txn
+		txncopy.Inputs[inpindex].PublicKey = prevtxn.Outputs[input.OutIndex].PublicKeyHash
+		// Generate the hash of the trimmed transaction and assign it to its ID
+		txncopy.ID = txncopy.GenerateHash()
+		// Set the input public key to nil
+		txncopy.Inputs[inpindex].PublicKey = nil
+
+		// Sign the transaction with the ECDSA method using the private key and ID of the transaction trim
+		r, s, err := ecdsa.Sign(rand.Reader, &privatekey, txncopy.ID)
+		// Handle any potential error
+		Handle(err)
+
+		// Append method outputs to form the signature
+		signature := append(r.Bytes(), s.Bytes()...)
+		// Assign the signature of the Transaction
+		txn.Inputs[inpindex].Signature = signature
+	}
+
+}
+
+// A method of Transaction that verifies if the transaction signature is
+// valid for the given of map Transaction IDs to their Transactions.
+func (txn *Transaction) Verify(prevtxns map[string]Transaction) bool {
+	// Check if the transaction is a coinbase (cannot verify coinbase txns)
+	if txn.IsCoinbaseTxn() {
+		return true
+	}
+
+	// Iterate over the transaction inputs
+	for _, input := range txn.Inputs {
+		// Check if the previous transactions value is consistent
+		if prevtxns[hex.EncodeToString(input.ID)].ID == nil {
+			Handle(fmt.Errorf("error: previous transaction is not correct"))
+		}
+	}
+
+	// Generate a trim copy of the transaction
+	txncopy := txn.GenerateTrimCopy()
+
+	// Iterate over the inputs of the trimmed transaction
+	for inpindex, input := range txncopy.Inputs {
+		// Retrive the corresponding the previous transaction
+		prevtxn := prevtxns[hex.EncodeToString(input.ID)]
+
+		// Set the input signature to nil
+		txncopy.Inputs[inpindex].Signature = nil
+		// Set the input public key with the public key hash from the prev txn
+		txncopy.Inputs[inpindex].PublicKey = prevtxn.Outputs[input.OutIndex].PublicKeyHash
+		// Generate the hash of the trimmed transaction and assign it to its ID
+		txncopy.ID = txncopy.GenerateHash()
+		// Set the input public key to nil
+		txncopy.Inputs[inpindex].PublicKey = nil
+
+		// Declare r and s as big Ints
+		r := big.Int{}
+		s := big.Int{}
+		// Retrieve the size of the signature
+		signaturesize := len(input.Signature)
+		// Split the signature into r and s values
+		r.SetBytes(input.Signature[:(signaturesize / 2)])
+		s.SetBytes(input.Signature[(signaturesize / 2):])
+
+		// Declare the x and y as big Ints
+		x := big.Int{}
+		y := big.Int{}
+		// Retrieve the size of the public key
+		keysize := len(input.PublicKey)
+		// Split the public key into its x and y coordinates
+		x.SetBytes(input.PublicKey[:(keysize / 2)])
+		y.SetBytes(input.PublicKey[(keysize / 2):])
+
+		// Create an ECDSA public key from sepc256r1 curve and the x, y coordinates
+		rawpublickey := ecdsa.PublicKey{elliptic.P256(), &x, &y}
+
+		// Check if the transaction has been signed with the public key's private pair
+		if !ecdsa.Verify(&rawpublickey, txncopy.ID, &r, &s) {
+			return false
+		}
+	}
+
+	// Return true if all transactions are verified
+	return true
 }
 
 // A function to serialize a Transaction into gob of bytes
