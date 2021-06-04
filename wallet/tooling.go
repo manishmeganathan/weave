@@ -86,13 +86,12 @@ func ValidateWalletAddress(address string) bool {
 
 	// Isolate the checksum from the public hash
 	checksum := publichash[len(publichash)-4:]
-	// Isolate the version from the public hash
-	version := publichash[0]
-	// Isolate the public key hash from the full public hash
+	// Isolate the public key hash from the full public
+	// hash by removing the checksum and version
 	publichash = publichash[1 : len(publichash)-4]
 
 	// Generate a new checksum from the version and public key hash
-	targetsum := GeneratePublicKeyCheckSum(append([]byte{version}, publichash...))
+	targetsum := GeneratePublicKeyCheckSum(append([]byte{}, publichash...))
 	// Check if the new checksum is equal to the check sum of the given address
 	return bytes.Equal(checksum, targetsum)
 }
