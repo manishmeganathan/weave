@@ -328,6 +328,122 @@ func (chain *BlockChain) AccumulateUTX0() map[string]TXOList {
 	return utxos
 }
 
+// A method of BlockChain that reindexes
+// all the utxo layer keys on the database.
+func (chain *BlockChain) ReindexUTXO() {
+	// Delete all the UTXOs stored on the database
+	chain.DeleteKeyPrefix(utxoprefix)
+	// Accumulate all the UTXOs on the blockchain
+	utxos := chain.AccumulateUTX0()
+
+	// Define an Update transaction on the database
+	err := chain.Database.Update(func(txn *badger.Txn) error {
+		// Iterate over the UTXOs map
+		for txid, txolist := range utxos {
+			// Decode the transaction ID
+			key, err := hex.DecodeString(txid)
+			if err != nil {
+				// Return an error if any
+				return err
+			}
+
+			// Construct the key by adding the UTXO key prefix
+			key = append(utxoprefix, key...)
+			// Add the TXOList to the database with the key
+			err = txn.Set(key, TXOListSerialize(&txolist))
+			// Handle any potential error
+			Handle(err)
+		}
+
+		// Return nil error
+		return nil
+	})
+
+	// Handle any potential error
+	Handle(err)
+}
+
+// A method of BlockChain that updates the utxo layer keys
+// from the transaction of a Block, given the block.
+func (chain *BlockChain) UpdateUTXO(block *Block) {
+	// Define an Update transaction on the database
+	err := chain.Database.Update(func(dbtxn *badger.Txn) error {
+		// Iterate over the transactions in the block
+		for _, txn := range block.Transactions {
+			// Verify that transaction is not a coinbase
+			if !txn.IsCoinbaseTxn() {
+				// Iterate over the transaction inputs
+				for _, input := range txn.Inputs {
+					// Create an empty transaction output list
+					updatedouts := TXOList{}
+
+					// Create the input ID from the utxo
+					// prefix and ID of the transaction input
+					inputid := append(utxoprefix, input.ID...)
+
+					// Retrieve a utxo item from the database
+					item, err := dbtxn.Get(inputid)
+					// Handle any potential errors
+					Handle(err)
+
+					// Declare a transaction output list
+					var outputs TXOList
+					// Retrieve the value of the utxo item and
+					// deserialize it into the output list
+					err = item.Value(func(val []byte) error {
+						outputs = *TXOListDeserialize(val)
+						return nil
+					})
+
+					// Iterate over the transaction output list
+					for outindex, output := range outputs {
+						// Update the transaction outputs for the transaction ID from the input
+						if outindex != input.OutIndex {
+							updatedouts = append(updatedouts, output)
+						}
+					}
+
+					// Check if there are any transactions in the updated list
+					if len(updatedouts) == 0 {
+						// Delete all transaction outputs in the utxo item on the db
+						if err := dbtxn.Delete(inputid); err != nil {
+							// Handle any potential errors
+							Handle(err)
+						}
+					} else {
+						// Set the utxo item to the updated list of transaction outputs
+						if err := dbtxn.Set(inputid, TXOListSerialize(&updatedouts)); err != nil {
+							// Handle any potential errors
+							Handle(err)
+						}
+					}
+				}
+			}
+
+			// Create a new transaction output list
+			newoutputs := TXOList{}
+			// Iterate over the transaction outputs
+			for _, output := range txn.Outputs {
+				// Accumulate the transaction outputs to the list
+				newoutputs = append(newoutputs, output)
+			}
+
+			// Create the utxo item key from the utxo prefix and transaction ID
+			txnid := append(utxoprefix, txn.ID...)
+			// Add the list of transaction outputs to the db
+			if err := dbtxn.Set(txnid, TXOListSerialize(&newoutputs)); err != nil {
+				// Handle any potential errors
+				Handle(err)
+			}
+		}
+		// Return a nil error
+		return nil
+	})
+
+	// Handle any potential errors
+	Handle(err)
+}
+
 // A method of BlockChain that deletes all entries
 // with a given prefix from the Badger DB.
 func (chain *BlockChain) DeleteKeyPrefix(prefix []byte) {
