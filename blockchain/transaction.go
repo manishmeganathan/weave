@@ -36,8 +36,8 @@ func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction
 
 	// Generate the public key hash for the wallet's public key
 	publickeyhash := wallet.GeneratePublicKeyHash(w.PublicKey)
-	// Accumulate the spendable transaction outputs of the account up to the given amount with the public key hash
-	accumulated, validoutputs := chain.AccumulateSpendableTXO(publickeyhash, amount)
+	// Collect the spendable transaction outputs of the account up to the given amount with the public key hash
+	accumulated, validoutputs := chain.CollectSpendableTXOS(publickeyhash, amount)
 
 	// Check if the account has enough funds
 	if accumulated < amount {

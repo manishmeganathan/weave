@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	utxoprefix   = []byte("utxo-")
-	prefixlength = len(utxoprefix)
+	utxoprefix = []byte("utxo-")
+	//prefixlength = len(utxoprefix)
 )
 
 // A structure that represents the Animus BlockChain
@@ -266,7 +266,7 @@ func (chain *BlockChain) VerifyTransaction(txn *Transaction, privatekey ecdsa.Pr
 
 // A method of BlockChain that accumulates all unspent transactions on
 // the chain and returns them as a map transaction ID to TXOList.
-func (chain *BlockChain) AccumulateUTX0() map[string]TXOList {
+func (chain *BlockChain) AccumulateUTX0S() map[string]TXOList {
 	// Define the slice of unspent transactions
 	utxos := make(map[string]TXOList)
 	// Define a map to store spent transaction outputs
@@ -328,13 +328,148 @@ func (chain *BlockChain) AccumulateUTX0() map[string]TXOList {
 	return utxos
 }
 
+func (chain *BlockChain) CollectSpendableTXOS(publickeyhash []byte, amount int) (int, map[string][]int) {
+	// Create a map of strings to a slice of ints
+	unspenttxos := make(map[string][]int)
+	// Declare an accumulation integer
+	accumulated := 0
+
+	// Define a View transaction on the database
+	err := chain.Database.View(func(txn *badger.Txn) error {
+		// Start a database iterator with the default options
+		dbiterator := txn.NewIterator(badger.DefaultIteratorOptions)
+		// Defer the closing of the database
+		defer dbiterator.Close()
+
+		// Iterate over the database elements that are utxo items
+		for dbiterator.Seek(utxoprefix); dbiterator.ValidForPrefix(utxoprefix); dbiterator.Next() {
+			// Retrieve an item from the database iterator
+			item := dbiterator.Item()
+
+			// Retrieve the key of the item
+			key := item.Key()
+			// Trime the key to not have the utxo prefix
+			key = bytes.TrimPrefix(key, utxoprefix)
+			// Encode the key into the transaction ID
+			txnid := hex.EncodeToString(key)
+
+			// Declare a transaction output list
+			var outputs TXOList
+			// Retrieve the value of the item and
+			// deserialize it into the output list
+			err := item.Value(func(val []byte) error {
+				outputs = *TXOListDeserialize(val)
+				return nil
+			})
+			// Handle any potential errors
+			Handle(err)
+
+			// Iterate over the transaction output list
+			for outindex, output := range outputs {
+				// Checl if the transaction output is locked by the public key
+				// and ensure that accumulation has not reached the amount target
+				if output.CheckLock(publickeyhash) && accumulated < amount {
+					// Add the value of the output into the accumulation
+					accumulated += output.Value
+					// Add the transaction output's ID and index to the map
+					unspenttxos[txnid] = append(unspenttxos[txnid], outindex)
+				}
+			}
+		}
+		// Return a nil error
+		return nil
+	})
+
+	// Handle any potential errors
+	Handle(err)
+	// Return the accumulated amount and the list of unspent transactions
+	return accumulated, unspenttxos
+
+}
+
+// A method of BlockChain that fetches the unspent transaction outputs for
+// a given public key hash and returns it in a list of transaction outputs
+func (chain *BlockChain) FetchUTXOS(publickeyhash []byte) TXOList {
+	// Declare a transaction output list
+	var utxos TXOList
+
+	// Define a View transaction on the database
+	err := chain.Database.View(func(txn *badger.Txn) error {
+		// Start a database iterator with the default options
+		dbiterator := txn.NewIterator(badger.DefaultIteratorOptions)
+		// Defer the closing of the database
+		defer dbiterator.Close()
+
+		// Iterate over the database elements that are utxo items
+		for dbiterator.Seek(utxoprefix); dbiterator.ValidForPrefix(utxoprefix); dbiterator.Next() {
+			// Retrieve the iterator item
+			item := dbiterator.Item()
+			// Declare a transaction output list
+			var txolist TXOList
+
+			// Retrieve the value of the item and deserialize
+			// into a transaction output list
+			err := item.Value(func(val []byte) error {
+				txolist = *TXOListDeserialize(val)
+				return nil
+			})
+			// Handle any potential errors
+			Handle(err)
+
+			// Iterate over the transaction output list
+			for _, output := range txolist {
+				// Check if the transaction output is locked by the public key
+				if output.CheckLock(publickeyhash) {
+					// Add the transaction output to the list
+					utxos = append(utxos, output)
+				}
+			}
+		}
+		// Return a nil error
+		return nil
+	})
+
+	// Handle any potential errors
+	Handle(err)
+	// Return the list of unspent transaction outputs
+	return utxos
+}
+
+// A method of BlockChain that counts the number
+// of unspent transactions stored on the database
+func (chain *BlockChain) CountUTXOS() int {
+	// Declare a counter integer
+	counter := 0
+
+	// Define a View transaction on the database
+	err := chain.Database.View(func(txn *badger.Txn) error {
+		// Start a database iterator with the default options
+		dbiterator := txn.NewIterator(badger.DefaultIteratorOptions)
+		// Defer the closing of the database
+		defer dbiterator.Close()
+
+		// Iterate over the database elements that are utxo items
+		for dbiterator.Seek(utxoprefix); dbiterator.ValidForPrefix(utxoprefix); dbiterator.Next() {
+			// Increment the counter for each item
+			counter++
+		}
+		// Return nil error
+		return nil
+	})
+
+	// Handle any potential errors
+	Handle(err)
+	// Return the counter value
+	return counter
+}
+
 // A method of BlockChain that reindexes
 // all the utxo layer keys on the database.
-func (chain *BlockChain) ReindexUTXO() {
+func (chain *BlockChain) ReindexUTXOS() {
 	// Delete all the UTXOs stored on the database
 	chain.DeleteKeyPrefix(utxoprefix)
 	// Accumulate all the UTXOs on the blockchain
-	utxos := chain.AccumulateUTX0()
+	utxos := chain.AccumulateUTX0S()
 
 	// Define an Update transaction on the database
 	err := chain.Database.Update(func(txn *badger.Txn) error {
@@ -365,7 +500,7 @@ func (chain *BlockChain) ReindexUTXO() {
 
 // A method of BlockChain that updates the utxo layer keys
 // from the transaction of a Block, given the block.
-func (chain *BlockChain) UpdateUTXO(block *Block) {
+func (chain *BlockChain) UpdateUTXOS(block *Block) {
 	// Define an Update transaction on the database
 	err := chain.Database.Update(func(dbtxn *badger.Txn) error {
 		// Iterate over the transactions in the block
@@ -394,6 +529,8 @@ func (chain *BlockChain) UpdateUTXO(block *Block) {
 						outputs = *TXOListDeserialize(val)
 						return nil
 					})
+					// Handle any potential errors
+					Handle(err)
 
 					// Iterate over the transaction output list
 					for outindex, output := range outputs {
