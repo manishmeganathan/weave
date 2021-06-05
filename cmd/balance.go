@@ -38,7 +38,7 @@ to quickly create a Cobra application.`,
 
 		publickeyhash := wallet.Base58Decode([]byte(address))
 		publickeyhash = publickeyhash[1 : len(publickeyhash)-4]
-		unspenttxos := chain.AccumulateUTXO(publickeyhash)
+		unspenttxos := chain.FetchUTXOS(publickeyhash)
 
 		balance := 0
 		for _, output := range unspenttxos {

@@ -86,7 +86,33 @@ var chainCreateCmd = &cobra.Command{
 
 		defer chain.Database.Close()
 
+		chain.ReindexUTXOS()
+
 		fmt.Println("Animus Blockchain Created!")
+	},
+}
+
+// chainCreateCmd represents the 'chain create' command
+var chainReindexCmd = &cobra.Command{
+	Use:   "reindex",
+	Short: "Reindex the UTXO persistence layer",
+	Long:  `Reindex the UTXO persistence layer`,
+
+	Run: func(cmd *cobra.Command, args []string) {
+
+		chain, err := blockchain.AnimateBlockChain()
+		if err != nil {
+			fmt.Println("Animus Blockchain does not exist! Use 'animus chain create' to create one.")
+			chain.Database.Close()
+			return
+		}
+
+		defer chain.Database.Close()
+
+		chain.ReindexUTXOS()
+
+		count := chain.CountUTXOS()
+		fmt.Printf("Done! There are %d unspent output transactions.", count)
 	},
 }
 
@@ -96,6 +122,9 @@ func init() {
 
 	// Create the 'show' subcommand to 'chain'
 	chainCmd.AddCommand(chainShowCmd)
+
+	// Create the 'reindex' subcommand to 'chain'
+	chainCmd.AddCommand(chainReindexCmd)
 
 	// Create the 'create' subcommand to 'chain'
 	chainCmd.AddCommand(chainCreateCmd)
