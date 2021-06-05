@@ -108,8 +108,8 @@ func SeedBlockChain(address string) (*BlockChain, error) {
 	return &blockchain, nil
 }
 
-// A method of BlockChain that adds a new Block to the chain
-func (chain *BlockChain) AddBlock(blocktxns []*Transaction) {
+// A method of BlockChain that adds a new Block to the chain and returns it
+func (chain *BlockChain) AddBlock(blocktxns []*Transaction) *Block {
 	// Declare a slice a bytes to collect the hash value
 	var lasthash []byte
 
@@ -151,6 +151,8 @@ func (chain *BlockChain) AddBlock(blocktxns []*Transaction) {
 
 	// Handle any potential error
 	Handle(err)
+	// Return the block
+	return block
 }
 
 // A constructor function that generates an iterator for the BlockChain
@@ -328,6 +330,8 @@ func (chain *BlockChain) AccumulateUTX0S() map[string]TXOList {
 	return utxos
 }
 
+// A method of BlockChain that collects the spendable transaction outputs
+// given a public key hash and a target amount upto which to collect.
 func (chain *BlockChain) CollectSpendableTXOS(publickeyhash []byte, amount int) (int, map[string][]int) {
 	// Create a map of strings to a slice of ints
 	unspenttxos := make(map[string][]int)
@@ -384,7 +388,6 @@ func (chain *BlockChain) CollectSpendableTXOS(publickeyhash []byte, amount int) 
 	Handle(err)
 	// Return the accumulated amount and the list of unspent transactions
 	return accumulated, unspenttxos
-
 }
 
 // A method of BlockChain that fetches the unspent transaction outputs for
