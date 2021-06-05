@@ -10,6 +10,11 @@ import (
 	"github.com/dgraph-io/badger"
 )
 
+var (
+	utxoprefix   = []byte("utxo-")
+	prefixlength = len(utxoprefix)
+)
+
 // A structure that represents the Animus BlockChain
 type BlockChain struct {
 	Database *badger.DB // Represents the reference to the chain database
@@ -189,134 +194,6 @@ func (iter *BlockChainIterator) Next() *Block {
 	return &block
 }
 
-// A method of BlockChain that accumulates all unspent transaction for
-// a given public key hash and returns them as a slice of Transactions.
-func (chain *BlockChain) AccumulateUTXN(publickeyhash []byte) []Transaction {
-	// Define the slice of unspent transactions
-	var unspenttxns []Transaction
-	// Define a map to store spent transaction outputs
-	spenttxos := make(map[string][]int)
-
-	// Get an iterator for the blockchain and iterate over its block
-	iter := NewIterator(chain)
-	for {
-		// Get a block from the iterator
-		block := iter.Next()
-
-		// Iterate over the transactions in the block
-		for _, tx := range block.Transactions {
-			// Encode the transaction hash into a string
-			txid := hex.EncodeToString(tx.ID)
-
-		Outputs:
-			// Iterate over the transaction's outputs
-			for outindex, output := range tx.Outputs {
-				// Check if the transaction outputs have been spent
-				if spenttxos[txid] != nil {
-					// Iterate over the index of the spent transaction outputs
-					for _, spentout := range spenttxos[txid] {
-						// Check if the spent transaction output is the current transaction output
-						if spentout == outindex {
-							// Break from loop and check next transaction output
-							continue Outputs
-						}
-					}
-				}
-
-				// Check if the transaction output can be unlocked for the given address
-				if output.CheckLock(publickeyhash) {
-					// Add it to the list of unspent transactions
-					unspenttxns = append(unspenttxns, *tx)
-				}
-			}
-
-			// Check if the transaction is a coinbase transaction
-			if !tx.IsCoinbaseTxn() {
-				// Iterate over the transaction's inputs
-				for _, input := range tx.Inputs {
-					// Check if the transaction input can unlock for the given address
-					if input.CheckKey(publickeyhash) {
-						// Encode the ID of the transaction input (hash of the reference transaction output)
-						inputtxid := hex.EncodeToString(input.ID)
-						// Add the output index of the transaction input to spent transactions map
-						spenttxos[inputtxid] = append(spenttxos[inputtxid], input.OutIndex)
-					}
-				}
-			}
-		}
-
-		// Check if the block is the genesis block and break from the loop
-		if len(block.PrevHash) == 0 {
-			break
-		}
-	}
-
-	// Return the accumulated unspent transactions
-	return unspenttxns
-}
-
-// A method of BlockChain that accumulates all unspent transaction outputs.
-// for a given address and returns them as a slice of TxOutputs.
-func (chain *BlockChain) AccumulateUTXO(publickeyhash []byte) []TxOutput {
-	// Declare a slice of transaction outputs
-	var unspenttxos []TxOutput
-	// Accumulate the unspent transactions of the address
-	unspenttxns := chain.AccumulateUTXN(publickeyhash)
-
-	// Iterate over the unspent transactions
-	for _, tx := range unspenttxns {
-		// Iterate over transaction's outputs
-		for _, output := range tx.Outputs {
-			// Check if the transaction ouput can be unlocked by the address
-			if output.CheckLock(publickeyhash) {
-				// Add the unspent transaction output to the list
-				unspenttxos = append(unspenttxos, output)
-			}
-		}
-	}
-
-	// Return the accumulated unspent transaction outputs
-	return unspenttxos
-}
-
-// A method of BlockChain that accumulates unspent transaction outputs for a given
-// address until a given amount and returns the accumulated amount and the map of
-// transaction output IDs to their output index on the transaction.
-func (chain *BlockChain) AccumulateSpendableTXO(publickeyhash []byte, amount int) (int, map[string][]int) {
-	// Declare a map to collect unspent transaction outputs
-	unspenttxos := make(map[string][]int)
-	// Accumulate the unspent transactions of the address
-	unspenttxns := chain.AccumulateUTXN(publickeyhash)
-	// Declare an integer to accumulate output values
-	accumulated := 0
-
-Work:
-	// Iterate over the unspent transactions
-	for _, tx := range unspenttxns {
-		// Encode the transaction hash into a string
-		txid := hex.EncodeToString(tx.ID)
-
-		// Iterate over the transaction outputs
-		for outindex, output := range tx.Outputs {
-			// Check if the output can be unlocked by the address and if the accumulated value is less than the amount
-			if output.CheckLock(publickeyhash) && accumulated < amount {
-				// Add the value of the transaction output to the accumulation
-				accumulated += output.Value
-				// Add the transaction output id and index to the unspent transaction output map
-				unspenttxos[txid] = append(unspenttxos[txid], outindex)
-
-				// Check if the accumulated value has exceeded the amount
-				if accumulated >= amount {
-					break Work
-				}
-			}
-		}
-	}
-
-	// Return the accumulated value and the map of transaction outputs to their indexes
-	return accumulated, unspenttxos
-}
-
 // A method of BlockChain that finds a transaction
 // from the chain given a valid Transaction ID
 func (chain *BlockChain) FindTransaction(txnid []byte) (Transaction, error) {
@@ -385,4 +262,158 @@ func (chain *BlockChain) VerifyTransaction(txn *Transaction, privatekey ecdsa.Pr
 
 	// Verify the transaction signature and return the result
 	return txn.Verify(prevtxns)
+}
+
+// A method of BlockChain that accumulates all unspent transactions on
+// the chain and returns them as a map transaction ID to TXOList.
+func (chain *BlockChain) AccumulateUTX0() map[string]TXOList {
+	// Define the slice of unspent transactions
+	utxos := make(map[string]TXOList)
+	// Define a map to store spent transaction outputs
+	spenttxos := make(map[string][]int)
+
+	// Get an iterator for the blockchain and iterate over its block
+	iter := NewIterator(chain)
+	for {
+		// Get a block from the iterator
+		block := iter.Next()
+
+		// Iterate over the transactions in the block
+		for _, tx := range block.Transactions {
+			// Encode the transaction hash into a string
+			txid := hex.EncodeToString(tx.ID)
+
+		Outputs:
+			// Iterate over the transaction's outputs
+			for outindex, output := range tx.Outputs {
+				// Check if the transaction outputs have been spent
+				if spenttxos[txid] != nil {
+					// Iterate over the index of the spent transaction outputs
+					for _, spentout := range spenttxos[txid] {
+						// Check if the spent transaction output is the current transaction output
+						if spentout == outindex {
+							// Break from loop and check next transaction output
+							continue Outputs
+						}
+					}
+				}
+
+				// Retrieve the transaction output list from the map for the transaction ID
+				txolist := utxos[txid]
+				// Add the output to the list
+				txolist = append(txolist, output)
+				// Update the list on the map
+				utxos[txid] = txolist
+			}
+
+			// Check if the transaction is a coinbase transaction
+			if !tx.IsCoinbaseTxn() {
+				// Iterate over the transaction's inputs
+				for _, input := range tx.Inputs {
+					// Encode the ID of the transaction input (hash of the reference transaction output)
+					inputtxid := hex.EncodeToString(input.ID)
+					// Add the output index of the transaction input to spent transactions map
+					spenttxos[inputtxid] = append(spenttxos[inputtxid], input.OutIndex)
+				}
+			}
+		}
+
+		// Check if the block is the genesis block and break from the loop
+		if len(block.PrevHash) == 0 {
+			break
+		}
+	}
+
+	// Return the accumulated unspent transactions list
+	return utxos
+}
+
+// A method of BlockChain that deletes all entries
+// with a given prefix from the Badger DB.
+func (chain *BlockChain) DeleteKeyPrefix(prefix []byte) {
+
+	// Define a function that accepts a 2D slice of byte keys to delete
+	DeleteKeys := func(keystodelete [][]byte) error {
+
+		// Define an Update transaction on the database
+		err := chain.Database.Update(func(txn *badger.Txn) error {
+			// Iterate over the keys to delete
+			for _, key := range keystodelete {
+				// Delete the key
+				if err := txn.Delete(key); err != nil {
+					// Return any potential error
+					return err
+				}
+			}
+			// Return nil error
+			return nil
+		})
+
+		// Check if key deletion transaction has comlpeted without error
+		if err != nil {
+			// Return the error
+			return err
+		}
+		// Return nil error
+		return nil
+	}
+
+	// Define the size limit of key accumulation. This value
+	// is based on BadgerDBs optimal object handling limit.
+	collectlimit := 100000
+
+	// Define a View transaction on the database
+	chain.Database.View(func(txn *badger.Txn) error {
+
+		// Set up the default iteration options for the database
+		opts := badger.DefaultIteratorOptions
+		// Set value pre-fetching to off (We only need check the key's prefix to accumulate it)
+		opts.PrefetchValues = false
+		// Create an iterator with the options
+		dbiterator := txn.NewIterator(opts)
+		// Defer the closing of the iterator
+		defer dbiterator.Close()
+
+		// Declare collection counter
+		keyscollected := 0
+		// Create a 2D slice of bytes to collect keys
+		keystodelete := make([][]byte, 0)
+
+		// Start the iterator and seek the keys with the provided prefix (validate the keys for the prefix as well)
+		for dbiterator.Seek(prefix); dbiterator.ValidForPrefix(prefix); dbiterator.Next() {
+
+			// Make a copy of the key value
+			key := dbiterator.Item().KeyCopy(nil)
+			// Add the key to slice
+			keystodelete = append(keystodelete, key)
+			// Increment the counter
+			keyscollected++
+
+			// Check if counter has reached the collection limit
+			if keyscollected == collectlimit {
+				// Delete all keys accumulated so far
+				if err := DeleteKeys(keystodelete); err != nil {
+					// Handle any potential error
+					Handle(err)
+				}
+
+				// Reset the key accumulation
+				keystodelete = make([][]byte, 0)
+				// Reset the key accumulation counter
+				keyscollected = 0
+			}
+		}
+
+		// Check if there any keys that have been collected (but less than the collection limit)
+		if keyscollected > 0 {
+			// Delete all the accumulated keys
+			if err := DeleteKeys(keystodelete); err != nil {
+				// Handle any potential errors
+				Handle(err)
+			}
+		}
+
+		// Return a nil error for the transaction
+		return nil
+	})
 }
