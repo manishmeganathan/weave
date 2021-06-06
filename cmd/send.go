@@ -40,7 +40,9 @@ Command requires the 'sender', 'reciever' and 'amount' flags`,
 		defer chain.Database.Close()
 
 		tx := blockchain.NewTransaction(sender, receiver, amount, chain)
-		block := chain.AddBlock([]*blockchain.Transaction{tx})
+		coinbase := blockchain.NewCoinbaseTransaction(sender)
+
+		block := chain.AddBlock([]*blockchain.Transaction{coinbase, tx})
 		chain.UpdateUTXOS(block)
 
 		fmt.Println("Success!")
