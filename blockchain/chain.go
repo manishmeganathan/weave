@@ -82,7 +82,7 @@ func SeedBlockChain(address string) (*BlockChain, error) {
 	// Define an Update Transaction on the BadgerDB
 	err := db.Update(func(txn *badger.Txn) error {
 		// Generate a coinbase transaction for the genesis block
-		coinbase := NewCoinbaseTransaction(address, "First Transaction from Genesis")
+		coinbase := NewCoinbaseTransaction(address)
 		// Generate a Genesis Block for the chain with a coinbase transaction
 		genesisblock := NewBlock([]*Transaction{coinbase}, []byte{})
 		log.Println("Genesis Block Signed!")
@@ -248,6 +248,11 @@ func (chain *BlockChain) SignTransaction(txn *Transaction, privatekey ecdsa.Priv
 
 // A method of BlockChain that verifies the signature of a transaction given a private key
 func (chain *BlockChain) VerifyTransaction(txn *Transaction, privatekey ecdsa.PrivateKey) bool {
+	// Check if transaction is a coinbase
+	if txn.IsCoinbaseTxn() {
+		return true
+	}
+
 	// Create a map of transaction IDs to Transactions
 	prevtxns := make(map[string]Transaction)
 

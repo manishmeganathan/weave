@@ -83,17 +83,21 @@ func NewTransaction(from, to string, amount int, chain *BlockChain) *Transaction
 // A constructor function that generates and returns a coinbase Transaction.
 // A Coinbase transaction refers to a first transaction on a block and does not refer to any
 // previous output transactions and contains a token reward for the user who signs the block.
-func NewCoinbaseTransaction(to, data string) *Transaction {
-	// Check if the data passed is null
-	if data == "" {
-		// Create a data based on the address of the reciever
-		data = fmt.Sprintf("coins to %s", to)
-	}
+func NewCoinbaseTransaction(to string) *Transaction {
+	// Create a slice a bytes
+	randdata := make([]byte, 24)
+	// Add random data to the slice of bytes
+	_, err := rand.Read(randdata)
+	// Handle any potential errors
+	Handle(err)
+
+	// Collect the data from the hexadecimal interpretation of the random bytes
+	data := fmt.Sprintf("%x", randdata)
 
 	// Create a transaction input with no reference to a previous output
 	inputs := TxInput{ID: []byte{}, OutIndex: -1, Signature: nil, PublicKey: []byte(data)}
 	// Create a transaction output with the token reward
-	outputs := *NewTxOutput(100, to)
+	outputs := *NewTxOutput(25, to)
 
 	// Construct a transaction with no ID, and the set of inputs and outputs
 	txn := Transaction{ID: nil, Inputs: []TxInput{inputs}, Outputs: []TxOutput{outputs}}
