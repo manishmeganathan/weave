@@ -51,13 +51,13 @@ func (block *Block) GenerateTransactionsHash() []byte {
 	// Iterate over the transactions of the Block
 	for _, tx := range block.Transactions {
 		// Append each transaction's ID (hash)
-		txhashes = append(txhashes, tx.ID)
+		txhashes = append(txhashes, TxnSerialize(tx))
 	}
 
-	// Join all the transaction hashes together and hash that value
-	txhash := sha256.Sum256(bytes.Join(txhashes, []byte{}))
-	// Return the transactions hash
-	return txhash[:]
+	// Generate a merkle tree for the transactions
+	tree := NewMerkleTree(txhashes)
+	// Return the merkle root
+	return tree.RootNode.Data
 }
 
 // A method of Block that generates the max value of
