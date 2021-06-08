@@ -13,16 +13,26 @@ import (
 // A structure that represents the inputs in a transaction
 // which are really just references to previous outputs
 type TXI struct {
-	ID        []byte // Represents the reference transaction of which the output is a part
-	OutIndex  int    // Represents the index of output in the reference transaction
-	Signature []byte // Represents the signature of the transaction
-	PublicKey []byte // Represents the public key of the sending address
+	// Represents the transaction ID of which the reference output is a part
+	ID []byte
+
+	// Represents the index of reference output in the transaction
+	OutIndex int
+
+	// Represents the signature of the transaction
+	Signature []byte
+
+	// Represents the public key of the sending address
+	PublicKey []byte
 }
 
 // A structure that represents the outputs in a transaction
 type TXO struct {
-	Value         int    // Represents the token value of a given transaction output
-	PublicKeyHash []byte // Represents the hash of the public key of the recieving address
+	// Represents the token value of a given transaction output
+	Value int
+
+	// Represents the hash of the public key of the recieving address
+	PublicKeyHash []byte
 }
 
 // A type alias for a slice of transaction inputs
