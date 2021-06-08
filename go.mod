@@ -1,4 +1,4 @@
-module github.com/manishmeganathan/animus
+module github.com/manishmeganathan/blockweave
 
 go 1.16
 

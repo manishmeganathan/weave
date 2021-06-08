@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/manishmeganathan/animus/cmd"
+	"github.com/manishmeganathan/blockweave/cmd"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/manishmeganathan/animus/wallet"
+	"github.com/manishmeganathan/blockweave/wallet"
 	"github.com/spf13/cobra"
 )
 

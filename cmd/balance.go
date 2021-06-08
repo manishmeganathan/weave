@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/manishmeganathan/animus/blockchain"
-	"github.com/manishmeganathan/animus/wallet"
+	"github.com/manishmeganathan/blockweave/blockchain"
+	"github.com/manishmeganathan/blockweave/wallet"
 	"github.com/spf13/cobra"
 )
 

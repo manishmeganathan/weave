@@ -12,7 +12,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/manishmeganathan/animus/wallet"
+	"github.com/manishmeganathan/blockweave/wallet"
 )
 
 // A structure that represents a transaction on the Animus Blockchain
