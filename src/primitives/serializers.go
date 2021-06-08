@@ -12,7 +12,7 @@ import (
 )
 
 // A function to serialize a Block into gob of bytes
-func BlockSerialize(block *Block) []byte {
+func BlockSerialize(block *Block) Gob {
 	// Create a bytes buffer
 	var gobdata bytes.Buffer
 	// Create a new Gob encoder with the bytes buffer
@@ -29,7 +29,7 @@ func BlockSerialize(block *Block) []byte {
 }
 
 // A function to deserialize a gob of bytes into a Block
-func BlockDeserialize(gobdata []byte) *Block {
+func BlockDeserialize(gobdata Gob) *Block {
 	// Declare a Block variable
 	var block Block
 	// Create a new Gob decoder by reading the gob bytes
@@ -46,7 +46,7 @@ func BlockDeserialize(gobdata []byte) *Block {
 }
 
 // A function to serialize a Transaction into a gob of bytes
-func TxnSerialize(txn *Transaction) []byte {
+func TxnSerialize(txn *Transaction) Gob {
 	// Create a bytes buffer
 	var gobdata bytes.Buffer
 
@@ -64,7 +64,7 @@ func TxnSerialize(txn *Transaction) []byte {
 }
 
 // A function to deserialize a gob of bytes into a Transaction
-func TxnDeserialize(gobdata []byte) *Transaction {
+func TxnDeserialize(gobdata Gob) *Transaction {
 	// Declare a Block variable
 	var txn Transaction
 	// Create a new Gob decoder by reading the gob bytes
@@ -81,7 +81,7 @@ func TxnDeserialize(gobdata []byte) *Transaction {
 }
 
 // A function to serialize a TXOList into gob of bytes
-func TXOListSerialize(txos *TXOList) []byte {
+func TXOListSerialize(txos *TXOList) Gob {
 	// Create a bytes buffer
 	var gobdata bytes.Buffer
 
@@ -99,7 +99,7 @@ func TXOListSerialize(txos *TXOList) []byte {
 }
 
 // A function to deserialize a gob of bytes into a TXOList
-func TXOListDeserialize(gobdata []byte) *TXOList {
+func TXOListDeserialize(gobdata Gob) *TXOList {
 	// Declare a Block variable
 	var txos TXOList
 

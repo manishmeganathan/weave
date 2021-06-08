@@ -16,7 +16,7 @@ import (
 // A structure that represents a transaction on the Animus Blockchain
 type Transaction struct {
 	// Represents the ID of the transaction obtained from its hash
-	ID []byte
+	ID Hash
 
 	// Represents the list of transaction inputs
 	Inputs TXIList
@@ -28,7 +28,7 @@ type Transaction struct {
 // A constructor function that generates and returns a coinbase Transaction.
 // A Coinbase transaction refers to a first transaction on a block and does not refer to any
 // previous output transactions and contains a token reward for the user who signs the block.
-func NewCoinbaseTransaction(to string) *Transaction {
+func NewCoinbaseTransaction(to Address) *Transaction {
 	// Create a slice a bytes
 	randdata := make([]byte, 24)
 	// Add random data to the slice of bytes
@@ -59,11 +59,11 @@ func (txn *Transaction) IsCoinbaseTxn() bool {
 }
 
 // A method of Transaction that generates a hash of the Transaction
-func (txn *Transaction) GenerateHash() []byte {
+func (txn *Transaction) GenerateHash() Hash {
 	// Create a copy of the transaction
 	txncopy := *txn
 	// Remove the ID of the transaction copy
-	txncopy.ID = []byte{}
+	txncopy.ID = Hash{}
 
 	// Serialize the transaction into a gob and hash it
 	hash := utils.Hash256(TxnSerialize(&txncopy))
