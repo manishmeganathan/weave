@@ -6,8 +6,11 @@ structs into their binary gob formats
 package utils
 
 import (
+	"bytes"
+	"encoding/binary"
+
 	"github.com/mr-tron/base58"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // A function to encode a bytes payload into a Base58 bytes payload
@@ -23,7 +26,20 @@ func Base58Decode(encodeddata []byte) []byte {
 	// Cast the base 58 encoded data into a string and decode it
 	decode, err := base58.Decode(string(encodeddata[:]))
 	// Handle any potential errors
-	log.Fatal("base58 decode failed!", err)
+	logrus.Fatal("base58 decode failed!", err)
 	// Return the decoded bytes
 	return decode
+}
+
+// A function that encodes and returns an int64 as its hex/byte representation
+func HexEncode(number int64) []byte {
+	// Construct a new binary buffer
+	buff := new(bytes.Buffer)
+	// Write the number as a binary into the buffer in Big Endian order
+	err := binary.Write(buff, binary.BigEndian, number)
+	// Handle any potential error
+	logrus.Fatal("integer hex encode failed!", err)
+
+	// Return the bytes from the binary buffer
+	return buff.Bytes()
 }
