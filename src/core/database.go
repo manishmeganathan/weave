@@ -67,12 +67,19 @@ func (db *Database) Open(opts badger.Options) {
 	db.Client = client
 	// Set the open flag to true
 	db.IsOpen = true
+	// log the opening of the database
+	logrus.Info("database client has been opened")
 }
 
 // A method of Database that closes the BadgerDB client
 func (db *Database) Close() {
+	// log the closing of the database
+	logrus.Info("database client has been closed")
+	// Empty the client field
+	db.Client = nil
 	// Set the open flag to false
 	db.IsOpen = false
+
 	// Close the client
 	db.Client.Close()
 }
