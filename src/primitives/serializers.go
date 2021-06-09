@@ -45,6 +45,40 @@ func BlockDeserialize(gobdata Gob) *Block {
 	return &block
 }
 
+// A function to serialize a BlockHeader into gob of bytes
+func BlockHeaderSerialize(header *BlockHeader) Gob {
+	// Create a bytes buffer
+	var gobdata bytes.Buffer
+	// Create a new Gob encoder with the bytes buffer
+	encoder := gob.NewEncoder(&gobdata)
+	// Encode the Block into a gob
+	err := encoder.Encode(header)
+	// Handle any potential errors
+	logrus.WithFields(logrus.Fields{
+		"struct": "Block",
+	}).Fatal("gob encode failed!", err)
+
+	// Return the gob bytes
+	return gobdata.Bytes()
+}
+
+// A function to deserialize a gob of bytes into a BlockHeader
+func BlockHeaderDeserialize(gobdata Gob) *BlockHeader {
+	// Declare a Block variable
+	var header BlockHeader
+	// Create a new Gob decoder by reading the gob bytes
+	decoder := gob.NewDecoder(bytes.NewReader(gobdata))
+	// Decode the gob into a Block
+	err := decoder.Decode(&header)
+	// Handle any potential errors
+	logrus.WithFields(logrus.Fields{
+		"struct": "Block",
+	}).Fatal("gob encode failed!", err)
+
+	// Return the pointer to the BlockHeader
+	return &header
+}
+
 // A function to serialize a Transaction into a gob of bytes
 func TxnSerialize(txn *Transaction) Gob {
 	// Create a bytes buffer

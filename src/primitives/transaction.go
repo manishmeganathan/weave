@@ -5,12 +5,10 @@ of the Transaction struct and its methods
 package primitives
 
 import (
-	"crypto/rand"
 	"fmt"
 	"strings"
 
 	"github.com/manishmeganathan/blockweave/src/utils"
-	"github.com/sirupsen/logrus"
 )
 
 // A structure that represents a transaction on the Animus Blockchain
@@ -23,34 +21,6 @@ type Transaction struct {
 
 	// Represents the list of transaction outputs
 	Outputs TXOList
-}
-
-// A constructor function that generates and returns a coinbase Transaction.
-// A Coinbase transaction refers to a first transaction on a block and does not refer to any
-// previous output transactions and contains a token reward for the user who signs the block.
-func NewCoinbaseTransaction(to Address) *Transaction {
-	// Create a slice a bytes
-	randdata := make([]byte, 24)
-	// Add random data to the slice of bytes
-	_, err := rand.Read(randdata)
-	// Handle any potential errors
-	logrus.Fatal("coinbase transaction generation failed!", err)
-
-	// Collect the data from the hexadecimal interpretation of the random bytes
-	data := fmt.Sprintf("%x", randdata)
-
-	// Create a transaction input with no reference to a previous output
-	inputs := TXI{ID: []byte{}, OutIndex: -1, Signature: nil, PublicKey: []byte(data)}
-	// Create a transaction output with the token reward
-	outputs := *NewTxOutput(25, to)
-
-	// Construct a transaction with no ID, and the set of inputs and outputs
-	txn := Transaction{ID: nil, Inputs: TXIList{inputs}, Outputs: TXOList{outputs}}
-	// Set the ID (hash) for the transaction
-	txn.ID = txn.GenerateHash()
-
-	// Return the transaction
-	return &txn
 }
 
 // A method of Transaction that checks if it is a Coinbase Transaction

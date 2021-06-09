@@ -35,15 +35,6 @@ type TXO struct {
 	PublicKeyHash Hash
 }
 
-// A constructor function that generates and returns a new
-// transaction output given a token value and address
-func NewTxOutput(value int, address Address) *TXO {
-	txo := TXO{Value: value, PublicKeyHash: nil}
-	txo.Lock(address)
-
-	return &txo
-}
-
 // TODO: needs rework when wallet tools are refactored
 // A method of TxOutput that locks the output for a given address
 func (txo *TXO) Lock(address Address) {
@@ -70,8 +61,14 @@ type Address struct {
 	String string
 }
 
-// A constructor function that generates and returns
-// a new Address object from a given address string.
-func NewAddress(address string) *Address {
-	return &Address{Bytes: []byte(address), String: address}
+// A structure that represents a Node on the Merkle Tree
+type MerkleNode struct {
+	// Represents the hash data of the left child
+	Left Hash
+
+	// Represents the hash data of the right child
+	Right Hash
+
+	// Represents the hash data of the merkle node
+	Data Hash
 }
