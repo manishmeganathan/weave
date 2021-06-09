@@ -11,18 +11,15 @@ import (
 	"syscall"
 
 	"github.com/dgraph-io/badger"
+	"github.com/manishmeganathan/blockweave/src/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/vrecan/death/v3"
 )
 
-// TODO: MOVE TO A LOCATION OUTSIDE OF THE REPO DIR
-const dbfile string = "./tmp/db/blocks/MANIFEST"
-const dbpath string = "./tmp/db/blocks"
-
 // A function to check if the DB exists
 func DBExists() bool {
 	// Check if the database MANIFEST file exists
-	if _, err := os.Stat(dbfile); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(utils.DBfile); errors.Is(err, os.ErrNotExist) {
 		// Return false if the file is missing
 		return false
 	}
@@ -39,7 +36,7 @@ type Database struct {
 // a new Database object that has been opened
 func NewDatabase() *Database {
 	// Define the BadgerDB options for the DB path
-	opts := badger.DefaultOptions(dbpath)
+	opts := badger.DefaultOptions(utils.DBpath)
 	// Switch off the Badger Logger
 	opts.Logger = nil
 
