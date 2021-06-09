@@ -92,6 +92,7 @@ func (txn *Transaction) GenerateSafeCopy() Transaction {
 
 // A method of Transaction that generates the string representation
 // of a transaction and all its inputs and outputs.
+// TODO: NEEDS REWORK FOR FORMATTING
 func (txn *Transaction) GenerateString() string {
 	lines := []string{fmt.Sprintf("--- Transaction %x:", txn.ID)}
 
