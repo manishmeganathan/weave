@@ -13,12 +13,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// A constructor function that generates and returns
-// a new Address object from a given address string.
-func NewAddress(address string) *primitives.Address {
-	return &primitives.Address{Bytes: []byte(address), String: address}
-}
-
 // A constructor function that generates and returns a new
 // transaction output given a token value and address
 func NewTxOutput(value int, address primitives.Address) *primitives.TXO {

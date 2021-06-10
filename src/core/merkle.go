@@ -8,6 +8,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// A structure that represents a Node on the Merkle Tree
+type MerkleNode struct {
+	// Represents the hash data of the left child
+	Left primitives.Hash
+
+	// Represents the hash data of the right child
+	Right primitives.Hash
+
+	// Represents the hash data of the merkle node
+	Data primitives.Hash
+}
+
 // A structure that represents a Merkle Tree Builder
 type MerkleBuilder struct {
 	// Represents the channel that accepts transactions to add to the Merkle Tree
@@ -29,22 +41,22 @@ type MerkleBuilder struct {
 // A constructor function that generates and returns a MerkleNode
 // for a given pair of bytes payloads and flag that indicates if
 // the generated MerkleNode is base node (no children/leaves)
-func NewMerkleNode(leftdata, rightdata []byte, isbase bool) *primitives.MerkleNode {
+func NewMerkleNode(leftdata, rightdata []byte, isbase bool) *MerkleNode {
 	// Concatenate the left and right data
 	data := append(leftdata, rightdata...)
 	// Hash256 the accumulated data
 	hash := utils.Hash256(data)
 
 	// Declare a new MerkleNode
-	var merklenode primitives.MerkleNode
+	var merklenode MerkleNode
 
 	// Check the base generation flag
 	if isbase {
 		// Construct a base MerkleNodes that contains no children/leaves
-		merklenode = primitives.MerkleNode{Left: nil, Right: nil, Data: hash}
+		merklenode = MerkleNode{Left: nil, Right: nil, Data: hash}
 	} else {
 		// Construct a MerkleNode with the left, right and self hashes
-		merklenode = primitives.MerkleNode{Left: leftdata, Right: rightdata, Data: hash}
+		merklenode = MerkleNode{Left: leftdata, Right: rightdata, Data: hash}
 	}
 
 	// Return the merkle node
@@ -84,7 +96,7 @@ func (mb *MerkleBuilder) BuildWithTransactions(txns []*primitives.Transaction) {
 // Wait on the BuildGroup field to confirm the build completion
 func (mb *MerkleBuilder) Build() {
 	// Declare a slice of MerkleNodes
-	var nodes []primitives.MerkleNode
+	var nodes []MerkleNode
 	// Set the BuildGroup counter for two process layers
 	mb.BuildGroup.Add(2)
 
@@ -127,7 +139,7 @@ func (mb *MerkleBuilder) Build() {
 	// Run loop for half the number of leaf nodes
 	for i := 0; i < count/2; i++ {
 		// Re/Set the level slice of Merkle Node
-		var level []primitives.MerkleNode
+		var level []MerkleNode
 
 		// Iterate over every two leaf nodes
 		for j := 0; j < len(nodes); j += 2 {
