@@ -5,7 +5,12 @@ for various hashing functionality
 package utils
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/sha256"
+
+	"github.com/sirupsen/logrus"
 )
 
 /*
@@ -69,4 +74,28 @@ func CheckSum32(payload []byte) []byte {
 
 	// Return the checksum
 	return checksum
+}
+
+/*
+A function that generates a pair of digital
+signature keys based on the ECDSA algorithm
+using the secp256r1 elliptic curve.
+
+This method of generating cryptographic key pairs
+creates a pair with 1 in 10^77 chance of collision.
+*/
+func KeyGenECDSA() (ecdsa.PrivateKey, []byte) {
+	// Create a sepc256r1 elliptical curve
+	curve := elliptic.P256()
+
+	// Generate a set of keys with ECDSA algorithm
+	key, err := ecdsa.GenerateKey(curve, rand.Reader)
+	// Handle any potential errors
+	logrus.Fatal("ECDSA key generation failed!", err)
+
+	// Construct the public key by appending the Y coordinate bytes into the X coordinate slice
+	public := append(key.PublicKey.X.Bytes(), key.PublicKey.Y.Bytes()...)
+
+	// Return private and public keys
+	return *key, public
 }

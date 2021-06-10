@@ -9,8 +9,8 @@ type TXOList []TXO
 // A type alias for a byte slice that represents a hash
 type Hash []byte
 
-// A type alias for a byte slice that represents a wallet public key
-type PublicKey []byte
-
 // A type alias for a byte slice that represents a gob of data
 type Gob []byte
+
+// A type alias for a byte slice that represents a wallet public key
+type PublicKey []byte
