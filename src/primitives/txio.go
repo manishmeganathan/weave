@@ -8,6 +8,7 @@ import (
 	"bytes"
 
 	"github.com/manishmeganathan/blockweave/src/utils"
+	"github.com/manishmeganathan/blockweave/wallet"
 )
 
 // A structure that represents the inputs in a transaction
@@ -46,29 +47,16 @@ func (txo *TXO) Lock(address Address) {
 	txo.PublicKeyHash = publickeyhash
 }
 
+// A method of TxInput that checks if the input public key is valid for a given public key hash
+func (txi *TXI) CheckKey(publickeyhash Hash) bool {
+	// Generate the hash of the input public key
+	lockhash := wallet.GeneratePublicKeyHash(txi.PublicKey)
+	// Check if the locking hash is equal to the given hash
+	return bytes.Equal(lockhash, publickeyhash)
+}
+
 // A method of TxOutput that checks if the ouput key hash is valid for a given locking hash
 func (txo *TXO) CheckLock(lockhash []byte) bool {
 	// Check if locking hash is equal to output's key hash
 	return bytes.Equal(txo.PublicKeyHash, lockhash)
-}
-
-// A struct that represents the Address of a User/Wallet
-type Address struct {
-	// Bytes representation of the Address
-	Bytes []byte
-
-	// String representation of the Address
-	String string
-}
-
-// A structure that represents a Node on the Merkle Tree
-type MerkleNode struct {
-	// Represents the hash data of the left child
-	Left Hash
-
-	// Represents the hash data of the right child
-	Right Hash
-
-	// Represents the hash data of the merkle node
-	Data Hash
 }
