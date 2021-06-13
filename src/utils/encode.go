@@ -6,11 +6,10 @@ structs into their binary gob formats
 package utils
 
 import (
-	"bytes"
-	"encoding/binary"
+	"encoding/hex"
+	"strconv"
 
 	"github.com/mr-tron/base58"
-	"github.com/sirupsen/logrus"
 )
 
 // A function to encode a bytes payload into a Base58 bytes payload
@@ -26,20 +25,45 @@ func Base58Decode(encodeddata []byte) []byte {
 	// Cast the base 58 encoded data into a string and decode it
 	decode, err := base58.Decode(string(encodeddata[:]))
 	// Handle any potential errors
-	logrus.Fatal("base58 decode failed!", err)
+	HandleErrorLog(err, "base58 decode failed!")
 	// Return the decoded bytes
 	return decode
 }
 
-// A function that encodes and returns an int64 as its hex/byte representation
-func HexEncode(number int64) []byte {
-	// Construct a new binary buffer
-	buff := new(bytes.Buffer)
-	// Write the number as a binary into the buffer in Big Endian order
-	err := binary.Write(buff, binary.BigEndian, number)
-	// Handle any potential error
-	logrus.Fatal("integer hex encode failed!", err)
+// A function that encodes and returns an int as its hex/byte representation
+func HexEncode(number int) []byte {
+	// Format the integer into a string
+	strint := strconv.FormatInt(int64(number), 10)
+	// Convert the string into a slice of bytes
+	src := []byte(strint)
+	// Create a null destination object with
+	// capacity for the encoded object
+	dst := make([]byte, hex.EncodedLen(len(src)))
 
-	// Return the bytes from the binary buffer
-	return buff.Bytes()
+	// Encode the number into a hex
+	hex.Encode(dst, src)
+	// Return the hex value
+	return dst
+}
+
+// A function that decodes and returns an int as from its hex/byte representation
+func HexDecode(src []byte) int {
+	// Create a null destination object with
+	// capacity for the decoded object
+	dst := make([]byte, hex.DecodedLen(len(src)))
+
+	// Decode the number from a hex
+	_, err := hex.Decode(dst, src)
+	// Handle any potential error
+	HandleErrorLog(err, "hex decode failed!")
+
+	// Convert the decoded integer bytes into a string
+	strint := string(dst)
+	// Parse the string into an integer
+	number, err := strconv.ParseInt(strint, 10, 0)
+	// Handle any potential error
+	HandleErrorLog(err, "hex decode failed! @ integer parse")
+
+	// Return the integer
+	return int(number)
 }
