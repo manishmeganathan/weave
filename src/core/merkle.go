@@ -5,7 +5,6 @@ import (
 
 	"github.com/manishmeganathan/blockweave/src/primitives"
 	"github.com/manishmeganathan/blockweave/src/utils"
-	"github.com/sirupsen/logrus"
 )
 
 // A structure that represents a Node on the Merkle Tree
@@ -155,7 +154,7 @@ func (mb *MerkleBuilder) Build() {
 
 	// Check if the final node list has just one node
 	if len(nodes) != 1 {
-		logrus.Fatal("merkle builder logic failed!")
+		utils.HandleErrorLog(nil, "merkle builder logic failed!")
 	}
 
 	// Set the merkle builder's root

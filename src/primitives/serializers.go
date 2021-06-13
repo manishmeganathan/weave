@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"encoding/gob"
 
-	"github.com/sirupsen/logrus"
+	"github.com/manishmeganathan/blockweave/src/utils"
 )
 
 // A function to serialize a Block into gob of bytes
@@ -19,10 +19,8 @@ func BlockSerialize(block *Block) Gob {
 	encoder := gob.NewEncoder(&gobdata)
 	// Encode the Block into a gob
 	err := encoder.Encode(block)
-	// Handle any potential errors
-	logrus.WithFields(logrus.Fields{
-		"struct": "Block",
-	}).Fatal("gob encode failed!", err)
+	// Handle any potential error
+	utils.HandleErrorLog(err, "gob encode failed for Block!")
 
 	// Return the gob bytes
 	return gobdata.Bytes()
@@ -37,9 +35,7 @@ func BlockDeserialize(gobdata Gob) *Block {
 	// Decode the gob into a Block
 	err := decoder.Decode(&block)
 	// Handle any potential errors
-	logrus.WithFields(logrus.Fields{
-		"struct": "Block",
-	}).Fatal("gob encode failed!", err)
+	utils.HandleErrorLog(err, "gob decode failed for Block!")
 
 	// Return the pointer to the Block
 	return &block
@@ -54,9 +50,7 @@ func BlockHeaderSerialize(header *BlockHeader) Gob {
 	// Encode the Block into a gob
 	err := encoder.Encode(header)
 	// Handle any potential errors
-	logrus.WithFields(logrus.Fields{
-		"struct": "Block",
-	}).Fatal("gob encode failed!", err)
+	utils.HandleErrorLog(err, "gob encode failed for BlockHeader!")
 
 	// Return the gob bytes
 	return gobdata.Bytes()
@@ -71,9 +65,7 @@ func BlockHeaderDeserialize(gobdata Gob) *BlockHeader {
 	// Decode the gob into a Block
 	err := decoder.Decode(&header)
 	// Handle any potential errors
-	logrus.WithFields(logrus.Fields{
-		"struct": "Block",
-	}).Fatal("gob encode failed!", err)
+	utils.HandleErrorLog(err, "gob decode failed for BlockHeader!")
 
 	// Return the pointer to the BlockHeader
 	return &header
@@ -89,9 +81,7 @@ func TxnSerialize(txn *Transaction) Gob {
 	// Encode the Transaction into a gob
 	err := encoder.Encode(txn)
 	// Handle any potential errors
-	logrus.WithFields(logrus.Fields{
-		"struct": "Transaction",
-	}).Fatal("gob encode failed!", err)
+	utils.HandleErrorLog(err, "gob encode failed for Transaction!")
 
 	// Return the gob bytes
 	return gobdata.Bytes()
@@ -106,9 +96,7 @@ func TxnDeserialize(gobdata Gob) *Transaction {
 	// Decode the gob into a Block
 	err := decoder.Decode(&txn)
 	// Handle any potential errors
-	logrus.WithFields(logrus.Fields{
-		"struct": "Transaction",
-	}).Fatal("gob decode failed!", err)
+	utils.HandleErrorLog(err, "gob decode failed for Transaction!")
 
 	// Return the pointer to the Transaction
 	return &txn
@@ -124,9 +112,7 @@ func TXOListSerialize(txos *TXOList) Gob {
 	// Encode the Transaction into a gob
 	err := encoder.Encode(txos)
 	// Handle any potential errors
-	logrus.WithFields(logrus.Fields{
-		"struct": "TXOList",
-	}).Fatal("gob decode failed!", err)
+	utils.HandleErrorLog(err, "gob encode failed for TXOList!")
 
 	// Return the gob bytes
 	return gobdata.Bytes()
@@ -142,9 +128,7 @@ func TXOListDeserialize(gobdata Gob) *TXOList {
 	// Decode the gob into a Block
 	err := decoder.Decode(&txos)
 	// Handle any potential errors
-	logrus.WithFields(logrus.Fields{
-		"struct": "TXOList",
-	}).Fatal("gob decode failed!", err)
+	utils.HandleErrorLog(err, "gob decode failed for TXOList!")
 
 	// Return the pointer to the Transaction
 	return &txos

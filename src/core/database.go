@@ -27,21 +27,21 @@ func DBExists() bool {
 	return true
 }
 
-type Database struct {
+type DatabaseClient struct {
 	Client *badger.DB
 	IsOpen bool
 }
 
 // A constructor function that generates and returns
 // a new Database object that has been opened
-func NewDatabase() *Database {
+func NewDatabaseClient() *DatabaseClient {
 	// Define the BadgerDB options for the DB path
 	opts := badger.DefaultOptions(utils.DBpath)
 	// Switch off the Badger Logger
 	opts.Logger = nil
 
 	// Construct an emtpy Database object
-	db := &Database{Client: nil, IsOpen: false}
+	db := &DatabaseClient{Client: nil, IsOpen: false}
 	// Open the database
 	db.Open(opts)
 
@@ -54,11 +54,11 @@ func NewDatabase() *Database {
 
 // A method of Database that opens the BadgerDB
 // client with the given badger DB options
-func (db *Database) Open(opts badger.Options) {
+func (db *DatabaseClient) Open(opts badger.Options) {
 	// Open the Badger DB with the defined options
 	client, err := badger.Open(opts)
 	// Handle any potential error
-	logrus.Fatal("database client failed to open", err)
+	utils.HandleErrorLog(err, "database client failed to open")
 
 	// Assign the DB client
 	db.Client = client
@@ -69,7 +69,7 @@ func (db *Database) Open(opts badger.Options) {
 }
 
 // A method of Database that closes the BadgerDB client
-func (db *Database) Close() {
+func (db *DatabaseClient) Close() {
 	// log the closing of the database
 	logrus.Info("database client has been closed")
 	// Empty the client field
@@ -83,7 +83,7 @@ func (db *Database) Close() {
 
 // A method of Database that closes the connection of the
 // BadgerDB client upon the runtime closing abruptly
-func (db *Database) CloseOnDeath() {
+func (db *DatabaseClient) CloseOnDeath() {
 	// Setup death signals
 	demise := death.NewDeath(syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 
@@ -102,7 +102,7 @@ func (db *Database) CloseOnDeath() {
 
 // A method of Database that deletes all entries
 // with a given prefix from the Badger DB.
-func (db *Database) DeleteKeyPrefix(prefix []byte) {
+func (db *DatabaseClient) DeleteKeyPrefix(prefix []byte) {
 
 	// Define a function that accepts a 2D slice of byte keys to delete
 	DeleteKeys := func(keystodelete [][]byte) error {
@@ -168,6 +168,7 @@ func (db *Database) DeleteKeyPrefix(prefix []byte) {
 					// Handle any potential error
 					logrus.WithFields(logrus.Fields{
 						"prefix": prefix,
+						"error":  err,
 					}).Fatal("database key prefix deletion failed!")
 				}
 
@@ -185,6 +186,7 @@ func (db *Database) DeleteKeyPrefix(prefix []byte) {
 				// Handle any potential errors
 				logrus.WithFields(logrus.Fields{
 					"prefix": prefix,
+					"error":  err,
 				}).Fatal("database key prefix deletion failed!")
 			}
 		}

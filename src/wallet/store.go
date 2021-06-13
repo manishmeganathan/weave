@@ -11,7 +11,6 @@ import (
 
 	"github.com/manishmeganathan/blockweave/src/primitives"
 	"github.com/manishmeganathan/blockweave/src/utils"
-	"github.com/sirupsen/logrus"
 )
 
 // A structure that represents a store of wallets
@@ -30,7 +29,7 @@ func NewWalletStore() *WalletStore {
 	// Read the walletstore file
 	err := walletstore.Load()
 	// Handle any potential errors
-	logrus.Fatalln("wallet store creation failed", err)
+	utils.HandleErrorLog(err, "wallet store creation failed")
 
 	// Return the wallet store
 	return &walletstore
@@ -85,12 +84,12 @@ func (ws *WalletStore) Save() {
 	// Encode the wallet store to the buffer
 	err := encoder.Encode(ws)
 	// Handle any potential errors
-	logrus.Fatalln("wallet store encode failed", err)
+	utils.HandleErrorLog(err, "wallet store encode failed")
 
 	// Write the bytes from the buffer to the walletstore file
 	err = ioutil.WriteFile(utils.WalletDB, buff.Bytes(), 0644)
 	// Handle any potential errors
-	logrus.Fatalln("wallet store save failed", err)
+	utils.HandleErrorLog(err, "wallet store save failed")
 }
 
 // A method of WalletStore that loads the walletstore file
