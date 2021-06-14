@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"time"
@@ -10,7 +11,7 @@ import (
 	"github.com/manishmeganathan/blockweave/src/consensus"
 	"github.com/manishmeganathan/blockweave/src/primitives"
 	"github.com/manishmeganathan/blockweave/src/utils"
-	"github.com/sirupsen/logrus"
+	"github.com/manishmeganathan/blockweave/src/wallet"
 )
 
 // A constructor function that generates and returns a new
@@ -22,6 +23,63 @@ func NewTxOutput(value int, address primitives.Address) *primitives.TXO {
 	return &txo
 }
 
+// A constructor function that generates and returns a Transaction
+// given the to and from addresses and the amount to transact.
+func NewTransaction(from, to primitives.Address, amount int, chain *BlockChain) *primitives.Transaction {
+	// Declare slices of transaction outputs and inputs
+	var txinputs primitives.TXIList
+	var txoutputs primitives.TXOList
+
+	// Create the wallet store
+	walletstore := wallet.NewWalletStore()
+	// Fetch the wallet from the wallet store for the given address
+	w := walletstore.FetchWallet(from.String)
+
+	// // Generate the public key hash for the wallet's public key
+	// publickeyhash := wallet.GeneratePublicKeyHash(w.PublicKey)
+
+	// Collect the spendable transaction outputs of the account up to the given amount with the public key hash
+	accumulated, validoutputs := chain.CollectSpendableUTXOS(from.PublicKeyHash, amount)
+
+	// Check if the account has enough funds
+	if accumulated < amount {
+		log.Panic("error: insufficient funds!")
+	}
+
+	// Iterate over the spendable transaction output IDs
+	for txnid, outputs := range validoutputs {
+		// Decode the transaction ID
+		txid, _ := hex.DecodeString(txnid)
+
+		// Iterate over the the output indexes
+		for _, output := range outputs {
+			// Create a transaction input with the transaction ID, output index and from address signature
+			input := primitives.TXI{ID: txid, OutIndex: output, Signature: nil, PublicKey: w.PublicKey}
+			// Add the transaction input into the slice
+			txinputs = append(txinputs, input)
+		}
+	}
+
+	// Add a transaction output with the amount to the address
+	txoutputs = append(txoutputs, *NewTxOutput(amount, to))
+
+	// Check if there is a balance in the accumulated amounted
+	if accumulated > amount {
+		// Add a transaction output with the balance amount back to the original sender
+		txoutputs = append(txoutputs, *NewTxOutput(accumulated-amount, from))
+	}
+
+	// Create a Transaction with the list of input and outputs
+	txn := primitives.Transaction{ID: nil, Inputs: txinputs, Outputs: txoutputs}
+	// Set the ID (hash) for the transaction
+	txn.ID = txn.GenerateHash()
+	// Sign the transaction using the wallet's private key
+	chain.SignTransaction(&txn, w.PrivateKey)
+
+	// Return the transaction
+	return &txn
+}
+
 // A constructor function that generates and returns a coinbase Transaction.
 // A Coinbase transaction refers to a first transaction on a block and does not refer to any
 // previous output transactions and contains a token reward for the user who signs the block.
@@ -31,7 +89,7 @@ func NewCoinbaseTransaction(to primitives.Address) *primitives.Transaction {
 	// Add random data to the slice of bytes
 	_, err := rand.Read(randdata)
 	// Handle any potential errors
-	logrus.Fatal("coinbase transaction generation failed!", err)
+	utils.HandleErrorLog(err, "coinbase transaction generation failed!")
 
 	// Collect the data from the hexadecimal interpretation of the random bytes
 	data := fmt.Sprintf("%x", randdata)
