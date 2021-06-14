@@ -13,3 +13,5 @@ const WeavePOW = "fustian"
 
 // Represents the Proof Of Work weave net
 const WeavePOS = "samite"
+
+var UTXOprefix = []byte("utxo-")
