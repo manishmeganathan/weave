@@ -64,7 +64,7 @@ func (addr *Address) IsValid() bool {
 	// Create the extended hash by concatenatin the public key hash to the prefix
 	extendedhash := append([]byte{addr.Prefix}, addr.PublicKeyHash...)
 	// Generate a checksum32 for the extended hash
-	newsum := utils.CheckSum32(extendedhash)
+	newsum := utils.Hash32(extendedhash)
 
 	// Check if the new checksum is equal to the isolated checksum
 	return bytes.Equal(addr.Checksum, newsum)

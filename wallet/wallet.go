@@ -33,7 +33,7 @@ func (w *Wallet) GenerateAddress(prefix byte) *primitives.Address {
 	// Generate the extended hash by appending the public key to the prefix
 	extendedhash := append([]byte{prefix}, publickeyhash...)
 	// Generate the checksum of the extended hash
-	checksum := utils.CheckSum32(extendedhash)
+	checksum := utils.Hash32(extendedhash)
 
 	// Append the checksum to the end of the extended hash
 	finalhash := append(extendedhash, checksum...)
