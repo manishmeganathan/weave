@@ -5,6 +5,7 @@ import (
 
 	"github.com/manishmeganathan/blockweave/primitives"
 	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/sirupsen/logrus"
 )
 
 // A structure that represents a wallet to access the blockchain
@@ -42,8 +43,10 @@ func (w *Wallet) GenerateAddress(prefix byte) *primitives.Address {
 	address := utils.Base58Encode(finalhash)
 	// Generate an Address from the address string
 	addr, err := primitives.NewAddress(string(address))
-	// Handle any potential error
-	utils.HandleErrorLog(err, "address generation failed")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to generate address for wallet.")
+	}
 
 	// Return the address
 	return addr
