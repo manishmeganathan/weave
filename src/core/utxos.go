@@ -295,11 +295,8 @@ func (chain *BlockChain) UpdateUTXOS(block *primitives.Block) {
 
 			// Create a new transaction output list
 			newoutputs := primitives.TXOList{}
-			// Iterate over the transaction outputs
-			for _, output := range txn.Outputs {
-				// Accumulate the transaction outputs to the list
-				newoutputs = append(newoutputs, output)
-			}
+			// Accumulate the transaction outputs to the list
+			newoutputs = append(newoutputs, txn.Outputs...)
 
 			// Create the utxo item key from the utxo prefix and transaction ID
 			txnid := append(utils.UTXOprefix, txn.ID...)
