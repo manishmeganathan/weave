@@ -7,8 +7,7 @@ package primitives
 import (
 	"bytes"
 
-	"github.com/manishmeganathan/blockweave/src/utils"
-	"github.com/manishmeganathan/blockweave/wallet"
+	"github.com/manishmeganathan/blockweave/utils"
 )
 
 // A structure that represents the inputs in a transaction
@@ -50,7 +49,7 @@ func (txo *TXO) Lock(address Address) {
 // A method of TxInput that checks if the input public key is valid for a given public key hash
 func (txi *TXI) CheckKey(publickeyhash Hash) bool {
 	// Generate the hash of the input public key
-	lockhash := wallet.GeneratePublicKeyHash(txi.PublicKey)
+	lockhash := utils.Hash160(txi.PublicKey)
 	// Check if the locking hash is equal to the given hash
 	return bytes.Equal(lockhash, publickeyhash)
 }
