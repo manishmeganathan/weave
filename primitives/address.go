@@ -37,18 +37,20 @@ func NewAddress(address string) (*Address, error) {
 
 	// Decode the address from base58 to get the full hash
 	fullhash := utils.Base58Decode(addr.Bytes)
+	// Calculate the breakpoint between the checksum and extended hash
+	hashlen := len(fullhash) - 4
 
-	// Isolate the checksum of the address from the full hash (last 4 bytes)
-	addr.Checksum = fullhash[len(fullhash)-4:]
-	// Isolate the extended hash from the full hash (remove checksum)
-	extendedhash := fullhash[:4]
+	// Isolate the checksum hash from the full hash (after the breakpoint)
+	addr.Checksum = fullhash[hashlen:]
+	// Isolate the extended hash from the full hash (before the breakpoint)
+	extendedhash := fullhash[:hashlen]
 
 	// Assign the prefix from the extended hash (first byte)
 	addr.Prefix = extendedhash[0]
 	// Assign the public key hash from the extended hash (remove prefix)
 	addr.PublicKeyHash = extendedhash[1:]
 
-	// Check if the address is valid
+	//Check if the address is valid
 	if !addr.IsValid() {
 		// Return an empty address and an error
 		return &Address{}, fmt.Errorf("invalid address")
