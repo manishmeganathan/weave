@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/manishmeganathan/blockweave/src/utils"
+	"github.com/manishmeganathan/blockweave/utils"
 )
 
 // A structure that represents a transaction on the Animus Blockchain

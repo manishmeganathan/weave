@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/dgraph-io/badger"
-	"github.com/manishmeganathan/blockweave/src/primitives"
-	"github.com/manishmeganathan/blockweave/src/utils"
+	"github.com/manishmeganathan/blockweave/primitives"
+	"github.com/manishmeganathan/blockweave/utils"
 )
 
 // A structure that represents an Iterator for the BlockChain

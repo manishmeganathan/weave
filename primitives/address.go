@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/manishmeganathan/blockweave/src/utils"
+	"github.com/manishmeganathan/blockweave/utils"
 )
 
 // A struct that represents the Address of a User/Wallet
@@ -67,9 +67,5 @@ func (addr *Address) IsValid() bool {
 	newsum := utils.CheckSum32(extendedhash)
 
 	// Check if the new checksum is equal to the isolated checksum
-	if !bytes.Equal(addr.Checksum, newsum) {
-		// Return false if unequal
-		return false
-	}
-	return true
+	return bytes.Equal(addr.Checksum, newsum)
 }

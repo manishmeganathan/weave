@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/manishmeganathan/blockweave/src/primitives"
-	"github.com/manishmeganathan/blockweave/src/utils"
+	"github.com/manishmeganathan/blockweave/primitives"
+	"github.com/manishmeganathan/blockweave/utils"
 )
 
 // A method of BlockChain that finds a transaction

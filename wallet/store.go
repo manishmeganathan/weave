@@ -9,8 +9,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/manishmeganathan/blockweave/src/primitives"
-	"github.com/manishmeganathan/blockweave/src/utils"
+	"github.com/manishmeganathan/blockweave/primitives"
+	"github.com/manishmeganathan/blockweave/utils"
 )
 
 // A structure that represents a store of wallets

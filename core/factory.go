@@ -8,10 +8,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/manishmeganathan/blockweave/src/consensus"
-	"github.com/manishmeganathan/blockweave/src/primitives"
-	"github.com/manishmeganathan/blockweave/src/utils"
-	"github.com/manishmeganathan/blockweave/src/wallet"
+	"github.com/manishmeganathan/blockweave/consensus"
+	"github.com/manishmeganathan/blockweave/primitives"
+	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/manishmeganathan/blockweave/wallet"
 )
 
 // A constructor function that generates and returns a new

@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"encoding/gob"
 
-	"github.com/manishmeganathan/blockweave/src/utils"
+	"github.com/manishmeganathan/blockweave/utils"
 )
 
 // A function to serialize a Block into gob of bytes
