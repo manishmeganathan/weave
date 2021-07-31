@@ -1,2 +1,2 @@
-# Animus
-## A Go blockchain implementation that uses a Proof of Work algorithm for consensus and BadgerDB for persistence
+# Blockweave
+## A Blockchain implementation in Go using libp2p/SHA3 and BadgerDB
