@@ -20,13 +20,3 @@ func LogInitialize(loglevel logrus.Level) {
 	// Only log the sepcified level or above.
 	logrus.SetLevel(loglevel)
 }
-
-// A function that logs a given error and message
-// with the fatal log level and an error field
-func HandleErrorLog(err error, msg string) {
-	// Check the error
-	if err != nil {
-		// log the error
-		logrus.WithFields(logrus.Fields{"error": err}).Fatalln(msg)
-	}
-}

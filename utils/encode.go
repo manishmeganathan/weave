@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/mr-tron/base58"
+	"github.com/sirupsen/logrus"
 )
 
 // A function to encode a bytes payload into a Base58 bytes payload
@@ -24,8 +25,11 @@ func Base58Encode(payload []byte) []byte {
 func Base58Decode(encodeddata []byte) []byte {
 	// Cast the base 58 encoded data into a string and decode it
 	decode, err := base58.Decode(string(encodeddata[:]))
-	// Handle any potential errors
-	HandleErrorLog(err, "base58 decode failed!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Errorln("failed to decode from base58.")
+	}
+
 	// Return the decoded bytes
 	return decode
 }
@@ -54,15 +58,19 @@ func HexDecode(src []byte) int {
 
 	// Decode the number from a hex
 	_, err := hex.Decode(dst, src)
-	// Handle any potential error
-	HandleErrorLog(err, "hex decode failed!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Errorln("failed to decode from hexadecimal.")
+	}
 
 	// Convert the decoded integer bytes into a string
 	strint := string(dst)
 	// Parse the string into an integer
 	number, err := strconv.ParseInt(strint, 10, 0)
-	// Handle any potential error
-	HandleErrorLog(err, "hex decode failed! @ integer parse")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Errorln("failed to parse integer from hexadecimal.")
+	}
 
 	// Return the integer
 	return int(number)

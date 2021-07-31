@@ -9,6 +9,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -104,8 +105,10 @@ func KeyGenECDSA() (ecdsa.PrivateKey, []byte) {
 
 	// Generate a set of keys with ECDSA algorithm
 	key, err := ecdsa.GenerateKey(curve, rand.Reader)
-	// Handle any potential error
-	HandleErrorLog(err, "ECDSA key generation failed!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Errorln("failed to generate an ECDSA key pair.")
+	}
 
 	// Construct the public key by appending the Y coordinate bytes into the X coordinate slice
 	public := append(key.PublicKey.X.Bytes(), key.PublicKey.Y.Bytes()...)
