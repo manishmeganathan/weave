@@ -31,13 +31,13 @@ func NewJBOK() *JBOK {
 	// Initialize the Wallets field
 	jbok.Wallets = make(map[string]*Wallet)
 	// Check if the jbok file exists
-	if _, err := os.Stat(config.JBOKFile); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(config.JBOK.File); errors.Is(err, os.ErrNotExist) {
 		// If the file does not exist. Save the empty JBOK object into a file
 		jbok.Save()
 	}
 
 	// Read the walletstore file into a slice of bytes
-	filecontents, err := ioutil.ReadFile(config.JBOKFile)
+	filecontents, err := ioutil.ReadFile(config.JBOK.File)
 	if err != nil {
 		// Log a fatal error
 		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to read jbok data from file.")
@@ -80,7 +80,7 @@ func (jbok *JBOK) Save() {
 	// Get the Config data
 	config := utils.ReadConfigFile()
 	// Write the bytes from the buffer to the jbok file
-	err = ioutil.WriteFile(config.JBOKFile, buff.Bytes(), 0644)
+	err = ioutil.WriteFile(config.JBOK.File, buff.Bytes(), 0644)
 	if err != nil {
 		// Log a fatal error
 		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to write jbok data to file.")
