@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"encoding/gob"
 
-	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/sirupsen/logrus"
 )
 
 // A function to serialize a Block into gob of bytes
@@ -19,8 +19,10 @@ func BlockSerialize(block *Block) Gob {
 	encoder := gob.NewEncoder(&gobdata)
 	// Encode the Block into a gob
 	err := encoder.Encode(block)
-	// Handle any potential error
-	utils.HandleErrorLog(err, "gob encode failed for Block!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to encode Block as Gob.")
+	}
 
 	// Return the gob bytes
 	return gobdata.Bytes()
@@ -34,8 +36,10 @@ func BlockDeserialize(gobdata Gob) *Block {
 	decoder := gob.NewDecoder(bytes.NewReader(gobdata))
 	// Decode the gob into a Block
 	err := decoder.Decode(&block)
-	// Handle any potential errors
-	utils.HandleErrorLog(err, "gob decode failed for Block!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to decode Gob as Block.")
+	}
 
 	// Return the pointer to the Block
 	return &block
@@ -49,8 +53,10 @@ func BlockHeaderSerialize(header *BlockHeader) Gob {
 	encoder := gob.NewEncoder(&gobdata)
 	// Encode the Block into a gob
 	err := encoder.Encode(header)
-	// Handle any potential errors
-	utils.HandleErrorLog(err, "gob encode failed for BlockHeader!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to encode BlockHeader as Gob.")
+	}
 
 	// Return the gob bytes
 	return gobdata.Bytes()
@@ -64,8 +70,10 @@ func BlockHeaderDeserialize(gobdata Gob) *BlockHeader {
 	decoder := gob.NewDecoder(bytes.NewReader(gobdata))
 	// Decode the gob into a Block
 	err := decoder.Decode(&header)
-	// Handle any potential errors
-	utils.HandleErrorLog(err, "gob decode failed for BlockHeader!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to decode Gob as BlockHeader.")
+	}
 
 	// Return the pointer to the BlockHeader
 	return &header
@@ -80,8 +88,10 @@ func TxnSerialize(txn *Transaction) Gob {
 	encoder := gob.NewEncoder(&gobdata)
 	// Encode the Transaction into a gob
 	err := encoder.Encode(txn)
-	// Handle any potential errors
-	utils.HandleErrorLog(err, "gob encode failed for Transaction!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to encode Transaction as Gob.")
+	}
 
 	// Return the gob bytes
 	return gobdata.Bytes()
@@ -95,8 +105,10 @@ func TxnDeserialize(gobdata Gob) *Transaction {
 	decoder := gob.NewDecoder(bytes.NewReader(gobdata))
 	// Decode the gob into a Block
 	err := decoder.Decode(&txn)
-	// Handle any potential errors
-	utils.HandleErrorLog(err, "gob decode failed for Transaction!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to decode Gob as Transaction.")
+	}
 
 	// Return the pointer to the Transaction
 	return &txn
@@ -111,8 +123,10 @@ func TXOListSerialize(txos *TXOList) Gob {
 	encoder := gob.NewEncoder(&gobdata)
 	// Encode the Transaction into a gob
 	err := encoder.Encode(txos)
-	// Handle any potential errors
-	utils.HandleErrorLog(err, "gob encode failed for TXOList!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to encode TXOList as Gob.")
+	}
 
 	// Return the gob bytes
 	return gobdata.Bytes()
@@ -127,8 +141,10 @@ func TXOListDeserialize(gobdata Gob) *TXOList {
 	decoder := gob.NewDecoder(bytes.NewReader(gobdata))
 	// Decode the gob into a Block
 	err := decoder.Decode(&txos)
-	// Handle any potential errors
-	utils.HandleErrorLog(err, "gob decode failed for TXOList!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to decode Gob as TXOList.")
+	}
 
 	// Return the pointer to the Transaction
 	return &txos
