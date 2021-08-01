@@ -13,6 +13,12 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+// A type alias for a byte slice that represents a hash
+type Hash []byte
+
+// A type alias for a byte slice that represents a wallet public key
+type PublicKey []byte
+
 /*
 A function that generates a 256 bit hash output for a given slice of bytes payload.
 
@@ -28,7 +34,7 @@ hash256 = SHA3-256(SHA3-256(payload))
 References:
 https://crypto.stackexchange.com/questions/68307/what-is-the-difference-between-sha-3-and-sha-256
 */
-func Hash256(payload []byte) []byte {
+func Hash256(payload []byte) Hash {
 	// Declare the hash byte array
 	var hash [32]byte
 
@@ -58,7 +64,7 @@ References:
 https://bitcoin.stackexchange.com/questions/16543/why-was-the-ripemd-160-hash-algorithms-chosen-before-sha-1
 https://crypto.stackexchange.com/questions/3153/sha-256-vs-any-256-bits-of-sha-512-which-is-more-secure
 */
-func Hash160(payload []byte) []byte {
+func Hash160(payload []byte) Hash {
 	// Generate the 256bit hash of the payload
 	hash256 := sha3.Sum256(payload)
 	// Generate the 224bit hash of the 256bit hash
@@ -81,7 +87,7 @@ This hash is used to represents the 32bit checksum of a payload.
 
 hash32 = first 32 bits of [SHA3-256(SHA3-256(payload))]
 */
-func Hash32(payload []byte) []byte {
+func Hash32(payload []byte) Hash {
 	// Generate the 256 bit hash of the payload
 	hash := Hash256(payload)
 	// Truncate the hash to 32bits (4bytes)
@@ -99,7 +105,7 @@ using the secp256r1 elliptic curve.
 This method of generating cryptographic key pairs
 creates a pair with 1 in 10^77 chance of collision.
 */
-func KeyGenECDSA() (ecdsa.PrivateKey, []byte) {
+func KeyGenECDSA() (ecdsa.PrivateKey, PublicKey) {
 	// Create a sepc256r1 elliptical curve
 	curve := elliptic.P256()
 
