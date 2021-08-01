@@ -6,12 +6,59 @@ structs into their binary gob formats
 package utils
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/hex"
 	"strconv"
 
 	"github.com/mr-tron/base58"
 	"github.com/sirupsen/logrus"
 )
+
+// A type alias for a byte slice that represents a gob of data
+type Gob []byte
+
+// An interface that defines a gob encodable object
+// Must be serializable and deserializable as a Gob.
+type GobEncodable interface {
+	// A method that serializes the object into a gob
+	Serialize() Gob
+	// A method that deserializes the object from a gob
+	Deserialize(Gob)
+}
+
+// A function to encode an object of arbirary type into a gob of bytes
+func GobEncode(object interface{}) Gob {
+	// Create a bytes buffer
+	var gobdata bytes.Buffer
+	// Create a new Gob encoder with the bytes buffer
+	encoder := gob.NewEncoder(&gobdata)
+	// Encode the object into a gob
+	err := encoder.Encode(object)
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalf("failed to encode object of type %T as Gob.\n", object)
+	}
+
+	// Return the gob bytes
+	return gobdata.Bytes()
+}
+
+// A function to decode a gob of bytes into an object of given type.
+// The data of the object will be overriden with the gob data.
+func GobDecode(gobdata Gob, object interface{}) interface{} {
+	// Create a new Gob decoder by reading the gob bytes
+	decoder := gob.NewDecoder(bytes.NewReader(gobdata))
+	// Decode the gob into a Block
+	err := decoder.Decode(object)
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to decode Gob as object of type %T.", object)
+	}
+
+	// Return the decoded object
+	return object
+}
 
 // A function to encode a bytes payload into a Base58 bytes payload
 func Base58Encode(payload []byte) []byte {
