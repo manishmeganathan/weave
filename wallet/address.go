@@ -1,4 +1,4 @@
-package primitives
+package wallet
 
 import (
 	"bytes"
@@ -19,10 +19,10 @@ type Address struct {
 	Prefix byte
 
 	// Represents the adddress checksum
-	Checksum Hash
+	Checksum utils.Hash
 
 	// Represents the hash of the public key of the address
-	PublicKeyHash Hash
+	PublicKeyHash utils.Hash
 }
 
 // A constructor function that generates and returns
