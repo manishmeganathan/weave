@@ -1,8 +1,4 @@
-/*
-This module contains the definition and implementation
-of the Database structure and its methods
-*/
-package core
+package persistence
 
 import (
 	"errors"
@@ -16,10 +12,19 @@ import (
 	"github.com/vrecan/death/v3"
 )
 
+// A struct that represents the Badger DB Client
+type DatabaseClient struct {
+	Client *badger.DB
+	IsOpen bool
+}
+
 // A function to check if the DB exists
 func DBExists() bool {
-	// Check if the database MANIFEST file exists
-	if _, err := os.Stat(utils.DBfile); errors.Is(err, os.ErrNotExist) {
+	// Get the Config data
+	config := utils.ReadConfigFile()
+
+	// Check if the database file exists
+	if _, err := os.Stat(config.DBFile); errors.Is(err, os.ErrNotExist) {
 		// Return false if the file is missing
 		return false
 	}
@@ -27,16 +32,14 @@ func DBExists() bool {
 	return true
 }
 
-type DatabaseClient struct {
-	Client *badger.DB
-	IsOpen bool
-}
-
 // A constructor function that generates and returns
 // a new Database object that has been opened
 func NewDatabaseClient() *DatabaseClient {
+	// Get the Config data
+	config := utils.ReadConfigFile()
+
 	// Define the BadgerDB options for the DB path
-	opts := badger.DefaultOptions(utils.DBpath)
+	opts := badger.DefaultOptions(config.DBDirectory)
 	// Switch off the Badger Logger
 	opts.Logger = nil
 
@@ -57,13 +60,16 @@ func NewDatabaseClient() *DatabaseClient {
 func (db *DatabaseClient) Open(opts badger.Options) {
 	// Open the Badger DB with the defined options
 	client, err := badger.Open(opts)
-	// Handle any potential error
-	utils.HandleErrorLog(err, "database client failed to open")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to open database.")
+	}
 
 	// Assign the DB client
 	db.Client = client
 	// Set the open flag to true
 	db.IsOpen = true
+
 	// log the opening of the database
 	logrus.Info("database client has been opened")
 }
