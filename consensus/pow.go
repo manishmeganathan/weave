@@ -5,7 +5,6 @@ import (
 	"math"
 	"math/big"
 
-	"github.com/manishmeganathan/blockweave/primitives"
 	"github.com/manishmeganathan/blockweave/utils"
 )
 
@@ -49,7 +48,7 @@ func (pow *POW) GenerateTarget() {
 
 // A method of POW that runs the Proof Of Work Algorithm
 // to generate the hash of the block and mint it.
-func (pow *POW) Mint(block *primitives.Block) error {
+func (pow *POW) Mint(blockheader utils.GobEncodable) error {
 	// Declare a big Int version of the hash
 	var inthash big.Int
 	// Declare an slice of bytes for the hash
@@ -60,7 +59,7 @@ func (pow *POW) Mint(block *primitives.Block) error {
 	// Iterate until nonce reaches the maximum int value
 	for pow.Nonce < math.MaxInt64 {
 		// Compose the block data
-		data := primitives.BlockHeaderSerialize(&block.BlockHeader)
+		data := blockheader.Serialize()
 		// Generate the hash256 for the composed data
 		hash = utils.Hash256(data)
 
@@ -87,11 +86,11 @@ func (pow *POW) Mint(block *primitives.Block) error {
 }
 
 // A method of POW that validates the block data for the target
-func (pow *POW) Validate(block *primitives.Block) bool {
+func (pow *POW) Validate(blockheader utils.GobEncodable) bool {
 	// Declare a big Int version of the hash
 	var inthash big.Int
 	// Compose the block data
-	data := primitives.BlockHeaderSerialize(&block.BlockHeader)
+	data := blockheader.Serialize()
 	// Generate the hash256 for the composed data
 	hash := utils.Hash256(data)
 	// Set the inthash with the hash
