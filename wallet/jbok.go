@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/manishmeganathan/blockweave/primitives"
 	"github.com/manishmeganathan/blockweave/utils"
 	"github.com/sirupsen/logrus"
 )
@@ -104,7 +103,7 @@ func (jbok *JBOK) GetAddresses() []string {
 }
 
 // A method of JBOK that adds a given wallet to the JBOK and returns its address.
-func (jbok *JBOK) AddWallet(wallet *Wallet) primitives.Address {
+func (jbok *JBOK) AddWallet(wallet *Wallet) Address {
 	// Generate the address of the wallet
 	address := wallet.GenerateAddress(byte(0x00))
 	// Assign the wallet to the JBOK with its address as the key
@@ -118,7 +117,7 @@ func (jbok *JBOK) AddWallet(wallet *Wallet) primitives.Address {
 
 // A method of JBOK that creates and adds a new wallet to the JBOK.
 // The address of the newly created wallet is returned.
-func (jbok *JBOK) CreateWallet() primitives.Address {
+func (jbok *JBOK) CreateWallet() Address {
 	// Construct a new Wallet
 	wallet := NewWallet()
 	// Add the wallet to the JBOK

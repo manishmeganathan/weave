@@ -3,7 +3,6 @@ package wallet
 import (
 	"crypto/ecdsa"
 
-	"github.com/manishmeganathan/blockweave/primitives"
 	"github.com/manishmeganathan/blockweave/utils"
 	"github.com/sirupsen/logrus"
 )
@@ -14,7 +13,7 @@ type Wallet struct {
 	PrivateKey ecdsa.PrivateKey
 
 	// Represents the public key of the wallet
-	PublicKey primitives.PublicKey
+	PublicKey utils.PublicKey
 }
 
 // A constructor function that generates and returns a Wallet
@@ -28,7 +27,7 @@ func NewWallet() *Wallet {
 	return &wallet
 }
 
-func (w *Wallet) GenerateAddress(prefix byte) *primitives.Address {
+func (w *Wallet) GenerateAddress(prefix byte) *Address {
 	// Generate the hash of the public key
 	publickeyhash := utils.Hash160(w.PublicKey)
 	// Generate the extended hash by appending the public key to the prefix
@@ -42,7 +41,7 @@ func (w *Wallet) GenerateAddress(prefix byte) *primitives.Address {
 	// Encode the final hash to base58
 	address := utils.Base58Encode(finalhash)
 	// Generate an Address from the address string
-	addr, err := primitives.NewAddress(string(address))
+	addr, err := NewAddress(string(address))
 	if err != nil {
 		// Log a fatal error
 		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to generate address for wallet.")
