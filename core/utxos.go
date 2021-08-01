@@ -5,15 +5,15 @@ import (
 	"encoding/hex"
 
 	"github.com/dgraph-io/badger"
-	"github.com/manishmeganathan/blockweave/primitives"
 	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/sirupsen/logrus"
 )
 
 // A method of BlockChain that accumulates all unspent transactions on
 // the chain and returns them as a map transaction ID to TXOList.
-func (chain *BlockChain) AccumulateUTX0S() map[string]primitives.TXOList {
+func (chain *BlockChain) AccumulateUTX0S() map[string]TXOList {
 	// Define a slice of UTXOs
-	utxos := make(map[string]primitives.TXOList)
+	utxos := make(map[string]TXOList)
 	// Define a map to store spent transaction outputs
 	spenttxos := make(map[string][]int)
 
@@ -52,7 +52,7 @@ func (chain *BlockChain) AccumulateUTX0S() map[string]primitives.TXOList {
 			}
 
 			// Check if the transaction is a coinbase transaction
-			if !tx.IsCoinbaseTxn() {
+			if !tx.IsCoinbase() {
 				// Iterate over the transaction's inputs
 				for _, input := range tx.Inputs {
 					// Encode the ID of the transaction input (hash of the reference transaction output)
@@ -101,11 +101,11 @@ func (chain *BlockChain) CollectSpendableUTXOS(publickeyhash []byte, amount int)
 			txnid := hex.EncodeToString(key)
 
 			// Declare a transaction output list
-			var outputs primitives.TXOList
+			var outputs TXOList
 			// Retrieve the value of the item and
 			// deserialize it into the output list
 			_ = item.Value(func(val []byte) error {
-				outputs = *primitives.TXOListDeserialize(val)
+				outputs.Deserialize(val)
 				return nil
 			})
 
@@ -131,9 +131,9 @@ func (chain *BlockChain) CollectSpendableUTXOS(publickeyhash []byte, amount int)
 
 // A method of BlockChain that fetches the unspent transaction outputs for
 // a given public key hash and returns it in a list of transaction outputs
-func (chain *BlockChain) FetchUTXOS(publickeyhash []byte) primitives.TXOList {
+func (chain *BlockChain) FetchUTXOS(publickeyhash []byte) TXOList {
 	// Declare a transaction output list
-	var utxos primitives.TXOList
+	var utxos TXOList
 
 	// Define a View transaction on the database
 	_ = chain.DB.Client.View(func(txn *badger.Txn) error {
@@ -147,12 +147,12 @@ func (chain *BlockChain) FetchUTXOS(publickeyhash []byte) primitives.TXOList {
 			// Retrieve the iterator item
 			item := dbiterator.Item()
 			// Declare a transaction output list
-			var txolist primitives.TXOList
+			var txolist TXOList
 
 			// Retrieve the value of the item and deserialize
 			// into a transaction output list
 			_ = item.Value(func(val []byte) error {
-				txolist = *primitives.TXOListDeserialize(val)
+				txolist.Deserialize(val)
 				return nil
 			})
 
@@ -221,9 +221,11 @@ func (chain *BlockChain) ReindexUTXOS() {
 			// Construct the key by adding the UTXO key prefix
 			key = append(utils.UTXOprefix, key...)
 			// Add the TXOList to the database with the key
-			err = txn.Set(key, primitives.TXOListSerialize(&txolist))
-			// Handle any potential error
-			utils.HandleErrorLog(err, "utxo reindex failed!")
+			err = txn.Set(key, txolist.Serialize())
+			if err != nil {
+				// Log a fatal error
+				logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to reindex utxos.")
+			}
 		}
 
 		// Return nil error
@@ -231,22 +233,25 @@ func (chain *BlockChain) ReindexUTXOS() {
 	})
 
 	// Handle any potential error
-	utils.HandleErrorLog(err, "utxo reindex failed!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to reindex utxos.")
+	}
 }
 
 // A method of BlockChain that updates the utxo layer keys
 // from the transaction of a Block, given the block.
-func (chain *BlockChain) UpdateUTXOS(block *primitives.Block) {
+func (chain *BlockChain) UpdateUTXOS(block *Block) {
 	// Define an Update transaction on the database
 	err := chain.DB.Client.Update(func(dbtxn *badger.Txn) error {
 		// Iterate over the transactions in the block
 		for _, txn := range block.TXList {
 			// Verify that transaction is not a coinbase
-			if !txn.IsCoinbaseTxn() {
+			if !txn.IsCoinbase() {
 				// Iterate over the transaction inputs
 				for _, input := range txn.Inputs {
 					// Create an empty transaction output list
-					updatedouts := primitives.TXOList{}
+					updatedouts := TXOList{}
 
 					// Create the input ID from the utxo
 					// prefix and ID of the transaction input
@@ -254,19 +259,24 @@ func (chain *BlockChain) UpdateUTXOS(block *primitives.Block) {
 
 					// Retrieve a utxo item from the database
 					item, err := dbtxn.Get(inputid)
-					// Handle any potential errors
-					utils.HandleErrorLog(err, "UTXO update failed!")
+					if err != nil {
+						// Log a fatal error
+						logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to update utxos.")
+					}
 
 					// Declare a transaction output list
-					var outputs primitives.TXOList
+					var outputs TXOList
 					// Retrieve the value of the utxo item and
 					// deserialize it into the output list
 					err = item.Value(func(val []byte) error {
-						outputs = *primitives.TXOListDeserialize(val)
+						outputs.Deserialize(val)
 						return nil
 					})
 					// Handle any potential errors
-					utils.HandleErrorLog(err, "UTXO update failed!")
+					if err != nil {
+						// Log a fatal error
+						logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to update utxos.")
+					}
 
 					// Iterate over the transaction output list
 					for outindex, output := range outputs {
@@ -280,36 +290,39 @@ func (chain *BlockChain) UpdateUTXOS(block *primitives.Block) {
 					if len(updatedouts) == 0 {
 						// Delete all transaction outputs in the utxo item on the db
 						if err := dbtxn.Delete(inputid); err != nil {
-							// Handle any potential errors
-							utils.HandleErrorLog(err, "UTXO update failed!")
+							// Log a fatal error
+							logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to update utxos.")
 						}
 					} else {
 						// Set the utxo item to the updated list of transaction outputs
-						if err := dbtxn.Set(inputid, primitives.TXOListSerialize(&updatedouts)); err != nil {
-							// Handle any potential errors
-							utils.HandleErrorLog(err, "UTXO update failed!")
+						if err := dbtxn.Set(inputid, updatedouts.Serialize()); err != nil {
+							// Log a fatal error
+							logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to update utxos.")
 						}
 					}
 				}
 			}
 
 			// Create a new transaction output list
-			newoutputs := primitives.TXOList{}
+			newoutputs := TXOList{}
 			// Accumulate the transaction outputs to the list
 			newoutputs = append(newoutputs, txn.Outputs...)
 
 			// Create the utxo item key from the utxo prefix and transaction ID
 			txnid := append(utils.UTXOprefix, txn.ID...)
 			// Add the list of transaction outputs to the db
-			if err := dbtxn.Set(txnid, primitives.TXOListSerialize(&newoutputs)); err != nil {
-				// Handle any potential errors
-				utils.HandleErrorLog(err, "UTXO update failed!")
+			if err := dbtxn.Set(txnid, newoutputs.Serialize()); err != nil {
+				// Log a fatal error
+				logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to update utxos.")
 			}
 		}
 		// Return a nil error
 		return nil
 	})
 
-	// Handle any potential errors
-	utils.HandleErrorLog(err, "UTXO update failed!")
+	// Handle any potential error
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to update utxos.")
+	}
 }
