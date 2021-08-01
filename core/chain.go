@@ -1,21 +1,29 @@
 package core
 
 import (
+	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
+	"math/big"
 
 	"github.com/dgraph-io/badger"
-	"github.com/manishmeganathan/blockweave/primitives"
+	"github.com/manishmeganathan/blockweave/merkle"
+	"github.com/manishmeganathan/blockweave/persistence"
 	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/manishmeganathan/blockweave/wallet"
 	"github.com/sirupsen/logrus"
 )
 
 // A structure that represents the blockchain
 type BlockChain struct {
 	// Represents the database where the chain is stored
-	DB *DatabaseClient
+	DB *persistence.DatabaseClient
 
 	// Represents the hash of the latest block
-	ChainHead primitives.Hash
+	ChainHead utils.Hash
 
 	// Represents the number of block on the chain (last block height+1)
 	ChainHeight int
@@ -23,31 +31,31 @@ type BlockChain struct {
 
 // A constructor function that seeds a new blockchain i.e creates one.
 // Returns an error if an Animus Blockchain already exists.
-func SeedBlockChain(address primitives.Address) (*BlockChain, error) {
+func SeedBlockChain(address wallet.Address) (*BlockChain, error) {
 	// Check if a blockchain already exists by checking if the DB exists
-	if DBExists() {
+	if persistence.DBExists() {
 		return &BlockChain{}, fmt.Errorf("blockchain already exists exist")
 	}
 
 	// Create a null blockchain
 	blockchain := BlockChain{}
 	// Set up the database client
-	blockchain.DB = NewDatabaseClient()
+	blockchain.DB = persistence.NewDatabaseClient()
 
 	// Generate a coinbase transaction for the genesis block
 	coinbase := NewCoinbaseTransaction(address)
 
 	// Create a merkle builder
-	merkle := NewMerkleBuilder()
+	merkletree := merkle.NewMerkleTree()
 	// Start the merkle builder
-	go merkle.Build()
+	go merkletree.Build()
 	// Send the coinbase transaction to the merkle build queue
-	merkle.BuildQueue <- coinbase
+	merkletree.BuildQueue <- coinbase
 	// Close the build queue
-	close(merkle.BuildQueue)
+	close(merkletree.BuildQueue)
 
 	// Generate a Genesis Block for the chain with a coinbase transaction
-	genesisblock := NewBlock(merkle, []byte{}, 0, address, []byte(utils.WeavePOW))
+	genesisblock := NewBlock(merkletree, []byte{}, 0, address)
 	// Log the minting of the genesis block
 	logrus.WithFields(logrus.Fields{
 		"address": address.String,
@@ -61,7 +69,7 @@ func SeedBlockChain(address primitives.Address) (*BlockChain, error) {
 	err := blockchain.DB.Client.Update(func(txn *badger.Txn) error {
 
 		// Add the Block to the DB with its hash as the key and its gob data as the value
-		if err := txn.Set(genesisblock.BlockHash, primitives.BlockSerialize(genesisblock)); err != nil {
+		if err := txn.Set(genesisblock.BlockHash, genesisblock.Serialize()); err != nil {
 			// Return any potential error
 			return fmt.Errorf("genesis block could not be stored! error - %v", err)
 		}
@@ -80,8 +88,12 @@ func SeedBlockChain(address primitives.Address) (*BlockChain, error) {
 
 		return nil
 	})
+
 	// Handle any potential errors
-	utils.HandleErrorLog(err, "chain seed failed!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to seed chain.")
+	}
 
 	// Assign the current chain head
 	blockchain.ChainHead = chainhead
@@ -100,14 +112,14 @@ func AnimateBlockChain() (*BlockChain, error) {
 	var chainheight []byte
 
 	// Check if a blockchain already exists by checking if the DB exists
-	if !DBExists() {
+	if !persistence.DBExists() {
 		return &BlockChain{}, fmt.Errorf("blockchain does not exist")
 	}
 
 	// Create a null blockchain
 	blockchain := BlockChain{}
 	// Set up the database client
-	blockchain.DB = NewDatabaseClient()
+	blockchain.DB = persistence.NewDatabaseClient()
 
 	// Define an Update Transaction on the BadgerDB
 	err := blockchain.DB.Client.Update(func(txn *badger.Txn) error {
@@ -148,8 +160,12 @@ func AnimateBlockChain() (*BlockChain, error) {
 
 		return nil
 	})
+
 	// Handle any potential errors
-	utils.HandleErrorLog(err, "chain animate failed!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to animate chain.")
+	}
 
 	// Assign the current chain head
 	blockchain.ChainHead = chainhead
@@ -161,22 +177,22 @@ func AnimateBlockChain() (*BlockChain, error) {
 }
 
 // A method of BlockChain that adds a new Block to the chain and returns it
-func (chain *BlockChain) AddBlock(blocktxns []*primitives.Transaction, addr primitives.Address) *primitives.Block {
+func (chain *BlockChain) AddBlock(blocktxns []*Transaction, addr wallet.Address) *Block {
 	// Create a merkle builder
-	merkle := NewMerkleBuilder()
+	merkletree := merkle.NewMerkleTree()
 	// Start the merkle builder
-	go merkle.Build()
+	go merkletree.Build()
 
 	// Iterate over the block transactions
 	for _, txn := range blocktxns {
 		// Send each transaction to the merkle build queue
-		merkle.BuildQueue <- txn
+		merkletree.BuildQueue <- txn
 	}
 	// Close the build queue
-	close(merkle.BuildQueue)
+	close(merkletree.BuildQueue)
 
 	// Generate a new Block
-	block := NewBlock(merkle, chain.ChainHead, chain.ChainHeight, addr, []byte(utils.WeavePOW))
+	block := NewBlock(merkletree, chain.ChainHead, chain.ChainHeight, addr)
 
 	// Assign the hash of the block as the chain head
 	chain.ChainHead = block.BlockHash
@@ -187,7 +203,7 @@ func (chain *BlockChain) AddBlock(blocktxns []*primitives.Transaction, addr prim
 	err := chain.DB.Client.Update(func(txn *badger.Txn) error {
 
 		// Add the Block to the DB with its hash as the key and its gob data as the value
-		if err := txn.Set(block.BlockHash, primitives.BlockSerialize(block)); err != nil {
+		if err := txn.Set(block.BlockHash, block.Serialize()); err != nil {
 			// Return any potential error
 			return fmt.Errorf("block data could not be stored! error - %v", err)
 		}
@@ -206,9 +222,174 @@ func (chain *BlockChain) AddBlock(blocktxns []*primitives.Transaction, addr prim
 
 		return nil
 	})
+
 	// Handle any potential errors
-	utils.HandleErrorLog(err, "block addition failed!")
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to add block to chain.")
+	}
 
 	// Return the block
 	return block
+}
+
+// A method of BlockChain that finds a transaction
+// from the chain given a valid Transaction ID
+func (chain *BlockChain) FindTransaction(txnid []byte) (Transaction, error) {
+
+	// Get an iterator for the blockchain and iterate over its block
+	iter := NewIterator(chain)
+
+	for {
+		// Get a block from the iterator
+		block := iter.Next()
+
+		// Iterate over the transactions of the block
+		for _, txn := range block.TXList {
+			// Check if the transaction ID matches
+			if bytes.Equal(txn.ID, txnid) {
+				// Return the transaction with a nil error
+				return *txn, nil
+			}
+		}
+
+		// Check if the block is genesis block
+		if block.BlockHeight == 0 {
+			break
+		}
+	}
+
+	// Return a nil Transaction with an error
+	return Transaction{}, fmt.Errorf("transaction does not exist")
+}
+
+// A method of BlockChain that signs a transaction given a private key
+func (chain *BlockChain) SignTransaction(txn *Transaction, privatekey ecdsa.PrivateKey) {
+	// Check if the transaction is a coinbase (cannot sign coinbase txns)
+	if txn.IsCoinbase() {
+		return
+	}
+
+	// Create a map of transaction IDs to Transactions
+	prevtxns := make(map[string]Transaction)
+
+	// Iterate over the inputs of the transaction
+	for _, input := range txn.Inputs {
+		// Find the Transaction with ID on the input from the blockchain
+		prevtxn, err := chain.FindTransaction(input.ID)
+		if err != nil {
+			// Log a fatal error
+			logrus.WithFields(logrus.Fields{"error": err}).Fatalf("failed to sign transaction. could not find transaction associated with txn input - %s\n", input.ID)
+		}
+
+		// Add the transaction to the map
+		prevtxns[hex.EncodeToString(prevtxn.ID)] = prevtxn
+	}
+
+	// Generate a safe copy of the transaction
+	txncopy := txn.GenerateSafeCopy()
+
+	// Iterate over the inputs of the trimmed transaction
+	for inpindex, input := range txncopy.Inputs {
+		// Retrive the corresponding the previous transaction
+		prevtxn := prevtxns[hex.EncodeToString(input.ID)]
+		// Retrieve the public key hash of the corresponding transaction output
+		pubkeyhash := prevtxn.Outputs[input.OutIndex].PublicKeyHash
+
+		// Set the input signature to nil
+		txncopy.Inputs[inpindex].Signature = nil
+
+		// Set the input public key with the public key hash from the prev txn
+		txncopy.Inputs[inpindex].PublicKey = utils.PublicKey(pubkeyhash)
+		// Generate the hash of the trimmed transaction and assign it to its ID
+		txncopy.ID = txncopy.GenerateHash()
+		// Set the input public key to nil
+		txncopy.Inputs[inpindex].PublicKey = nil
+
+		// Sign the transaction with the ECDSA method using the private key and ID of the transaction trim
+		r, s, err := ecdsa.Sign(rand.Reader, &privatekey, txncopy.ID)
+		if err != nil {
+			// Log a fatal error
+			logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to sign transaction.")
+		}
+
+		// Append method outputs to form the signature
+		signature := append(r.Bytes(), s.Bytes()...)
+		// Assign the signature of the Transaction
+		txn.Inputs[inpindex].Signature = signature
+	}
+}
+
+// A method of BlockChain that verifies the signature of a transaction given a private key
+func (chain *BlockChain) VerifyTransaction(txn *Transaction, privatekey ecdsa.PrivateKey) bool {
+	// Check if transaction is a coinbase
+	if txn.IsCoinbase() {
+		return true
+	}
+
+	// Create a map of transaction IDs to Transactions
+	prevtxns := make(map[string]Transaction)
+
+	// Iterate over the inputs of the transaction
+	for _, input := range txn.Inputs {
+		// Find the Transaction with ID on the input from the blockchain
+		prevtxn, err := chain.FindTransaction(input.ID)
+		if err != nil {
+			// Log a fatal error
+			logrus.WithFields(logrus.Fields{"error": err}).Fatalf("failed to verify transaction. could not find transaction associated with txn input - %s\n", input.ID)
+		}
+
+		// Add the transaction to the map
+		prevtxns[hex.EncodeToString(prevtxn.ID)] = prevtxn
+	}
+
+	// Generate a safe copy of the transaction
+	txncopy := txn.GenerateSafeCopy()
+
+	// Iterate over the inputs of the trimmed transaction
+	for inpindex, input := range txncopy.Inputs {
+		// Retrive the corresponding the previous transaction
+		prevtxn := prevtxns[hex.EncodeToString(input.ID)]
+		// Retrieve the public key hash of the corresponding transaction output
+		pubkeyhash := prevtxn.Outputs[input.OutIndex].PublicKeyHash
+
+		// Set the input signature to nil
+		txncopy.Inputs[inpindex].Signature = nil
+
+		// Set the input public key with the public key hash from the prev txn
+		txncopy.Inputs[inpindex].PublicKey = utils.PublicKey(pubkeyhash)
+		// Generate the hash of the trimmed transaction and assign it to its ID
+		txncopy.ID = txncopy.GenerateHash()
+		// Set the input public key to nil
+		txncopy.Inputs[inpindex].PublicKey = nil
+
+		// Declare r and s as big Ints
+		r := big.Int{}
+		s := big.Int{}
+		// Retrieve the size of the signature
+		signaturesize := len(input.Signature)
+		// Split the signature into r and s values
+		r.SetBytes(input.Signature[:(signaturesize / 2)])
+		s.SetBytes(input.Signature[(signaturesize / 2):])
+
+		// Declare the x and y as big Ints
+		x := big.Int{}
+		y := big.Int{}
+		// Retrieve the size of the public key
+		keysize := len(input.PublicKey)
+		// Split the public key into its x and y coordinates
+		x.SetBytes(input.PublicKey[:(keysize / 2)])
+		y.SetBytes(input.PublicKey[(keysize / 2):])
+
+		// Create an ECDSA public key from sepc256r1 curve and the x, y coordinates
+		rawpublickey := ecdsa.PublicKey{Curve: elliptic.P256(), X: &x, Y: &y}
+
+		// Check if the transaction has been signed with the public key's private pair
+		if !ecdsa.Verify(&rawpublickey, txncopy.ID, &r, &s) {
+			return false
+		}
+	}
+
+	// Return true if transactions is verified
+	return true
 }
