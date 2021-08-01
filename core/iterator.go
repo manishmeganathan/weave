@@ -4,14 +4,14 @@ import (
 	"fmt"
 
 	"github.com/dgraph-io/badger"
-	"github.com/manishmeganathan/blockweave/primitives"
-	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/manishmeganathan/blockweave/persistence"
+	"github.com/sirupsen/logrus"
 )
 
 // A structure that represents an Iterator for the BlockChain
 type BlockChainIterator struct {
-	Cursor   []byte          // Represents the hash of the block that the iterator is currently on
-	Database *DatabaseClient // Represents the reference to the chain database
+	Cursor   []byte                      // Represents the hash of the block that the iterator is currently on
+	Database *persistence.DatabaseClient // Represents the reference to the chain database
 }
 
 // A constructor function that generates and returns an iterator for the BlockChain
@@ -22,9 +22,9 @@ func NewIterator(chain *BlockChain) *BlockChainIterator {
 
 // A method of BlockChainIterator that iterates over chain and returns the
 // next block on the chain (backwards) from the chain DB and returns it
-func (iter *BlockChainIterator) Next() *primitives.Block {
+func (iter *BlockChainIterator) Next() *Block {
 	// Declare a Block variable
-	var block primitives.Block
+	var block Block
 
 	// Define a View Transaction on the BadgerDB
 	err := iter.Database.Client.View(func(txn *badger.Txn) error {
@@ -49,12 +49,18 @@ func (iter *BlockChainIterator) Next() *primitives.Block {
 		}
 
 		// Convert the block gob data into a Block object
-		block = *primitives.BlockDeserialize(blockgob)
+		block = Block{}
+		block.Deserialize(blockgob)
+
 		return err
 	})
 
-	// Handle any potential errors
-	utils.HandleErrorLog(err, "chain iteratation failed!")
+	// Handle any potential error
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to iterate over chain.")
+	}
+
 	// Update the iterator's cursor to the hash of block before the current block
 	iter.Cursor = block.BlockHeader.Priori
 	// Return the block
