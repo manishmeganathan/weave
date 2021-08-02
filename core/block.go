@@ -58,12 +58,11 @@ func NewBlock(merkletree *merkle.MerkleTree, priori utils.Hash, height int, orig
 
 	// Create and assign the block header
 	block.BlockHeader = *NewBlockHeader(priori, merkletree.MerkleRoot)
-
 	// Set the Consensus Header to Proof Of Work
 	block.BlockHeader.ConsensusHeader = consensus.NewPOW()
-
 	// Mint the block (sign)
-	block.Mint(&block.BlockHeader)
+	block.BlockHash = block.Mint(&block.BlockHeader)
+
 	// Return the signed block
 	return &block
 }
