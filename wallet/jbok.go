@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/manishmeganathan/weave/utils"
 	"github.com/sirupsen/logrus"
@@ -19,25 +20,31 @@ type JBOK struct {
 	Wallets map[string]*Wallet
 }
 
+// A function that returns the path to the jbok data file.
+// The jbok file is at %HOME%/blockweave/jbok.data
+func getjbokfilepath() string {
+	// Retrieve the path to the config dir.
+	configdir := utils.ConfigDirectory()
+	// Return the file location
+	return filepath.Join(configdir, "jbok.data")
+}
+
 // A constructor function that loads the JBOK data from a file and returns a JBOK object.
-// The data is read from a file specified in the 'jbokfile' key in the config file.
+// The data is read from the jbok file at %HOME%/blockweave/jbok.data
 // If the file does not exist, an empty JBOK is created.
 func NewJBOK() *JBOK {
-	// Get the Config data
-	config := utils.ReadConfigFile()
-
 	// Create a new JBOK object
 	jbok := JBOK{}
 	// Initialize the Wallets field
 	jbok.Wallets = make(map[string]*Wallet)
 	// Check if the jbok file exists
-	if _, err := os.Stat(config.JBOK.File); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(getjbokfilepath()); errors.Is(err, os.ErrNotExist) {
 		// If the file does not exist. Save the empty JBOK object into a file
 		jbok.Save()
 	}
 
 	// Read the walletstore file into a slice of bytes
-	filecontents, err := ioutil.ReadFile(config.JBOK.File)
+	filecontents, err := ioutil.ReadFile(getjbokfilepath())
 	if err != nil {
 		// Log a fatal error
 		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to read jbok data from file.")
@@ -59,8 +66,7 @@ func NewJBOK() *JBOK {
 	return &jbok
 }
 
-// A method of JBOK that saves the current state of the
-// JBOK to the jbok file specified in the config file.
+// A method of JBOK that saves the current state of the JBOK to the jbok file
 func (jbok *JBOK) Save() {
 	// Declare a bytes buffer
 	var buff bytes.Buffer
@@ -77,10 +83,8 @@ func (jbok *JBOK) Save() {
 		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to encode jbok data.")
 	}
 
-	// Get the Config data
-	config := utils.ReadConfigFile()
 	// Write the bytes from the buffer to the jbok file
-	err = ioutil.WriteFile(config.JBOK.File, buff.Bytes(), 0644)
+	err = ioutil.WriteFile(getjbokfilepath(), buff.Bytes(), 0644)
 	if err != nil {
 		// Log a fatal error
 		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to write jbok data to file.")
@@ -130,4 +134,12 @@ func (jbok *JBOK) CreateWallet() Address {
 // A method of JBOK that retrieves a wallet from the JBOK for a given address string.
 func (jbok *JBOK) FetchWallet(address string) *Wallet {
 	return jbok.Wallets[address]
+}
+
+// A method of JBOK that checks if a given address exists in the JBOK
+func (jbok *JBOK) CheckWallet(address string) bool {
+	// Check if the address exists in the JBOK
+	_, ok := jbok.Wallets[address]
+	// Return the result of the check
+	return ok
 }
