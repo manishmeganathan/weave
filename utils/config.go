@@ -171,3 +171,31 @@ func (config *Config) WriteConfigFile() error {
 
 	return nil
 }
+
+// A method of Config that prints the configuration
+// values in a formatted menu-list to stdout.
+func (config *Config) PrintConfigFile() {
+	// Print out the
+	fmt.Println()
+	fmt.Println("-----Weave-Configuration-File-----")
+	fmt.Println()
+
+	fmt.Println("----JBOK-Configuration----")
+	fmt.Printf("JBOK File: %v\n", config.JBOK.File)
+	fmt.Printf("JBOK Default: %v\n", config.JBOK.Default)
+	fmt.Println()
+
+	fmt.Println("----Database-Configuration----")
+	fmt.Printf("DB Root: %v\n", config.DB.Root)
+	fmt.Printf("DB State File: %v\n", config.DB.State.File)
+	fmt.Printf("DB State Directory: %v\n", config.DB.State.Directory)
+	fmt.Printf("DB Blocks File: %v\n", config.DB.Blocks.File)
+	fmt.Printf("DB Blocks Directory: %v\n", config.DB.Blocks.Directory)
+	fmt.Println()
+
+	// fmt.Println("----Network-Configuration----")
+	// fmt.Println()
+
+	fmt.Println("----end-of-file----")
+	fmt.Println()
+}
