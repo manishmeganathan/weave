@@ -4,8 +4,8 @@ import (
 	"encoding/gob"
 	"time"
 
-	"github.com/manishmeganathan/blockweave/consensus"
-	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/manishmeganathan/weave/consensus"
+	"github.com/manishmeganathan/weave/utils"
 )
 
 // A structure that represents the header of a Block

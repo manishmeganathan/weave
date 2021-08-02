@@ -1,10 +1,10 @@
 package core
 
 import (
-	"github.com/manishmeganathan/blockweave/merkle"
-	"github.com/manishmeganathan/blockweave/persistence"
-	"github.com/manishmeganathan/blockweave/utils"
-	"github.com/manishmeganathan/blockweave/wallet"
+	"github.com/manishmeganathan/weave/merkle"
+	"github.com/manishmeganathan/weave/persistence"
+	"github.com/manishmeganathan/weave/utils"
+	"github.com/manishmeganathan/weave/wallet"
 	"github.com/sirupsen/logrus"
 )
 

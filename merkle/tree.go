@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/manishmeganathan/weave/utils"
 	"github.com/sirupsen/logrus"
 )
 

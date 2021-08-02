@@ -1,6 +1,6 @@
 package merkle
 
-import "github.com/manishmeganathan/blockweave/utils"
+import "github.com/manishmeganathan/weave/utils"
 
 // A structure that represents a Node on the Merkle Tree
 type MerkleNode struct {

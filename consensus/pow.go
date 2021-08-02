@@ -5,7 +5,7 @@ import (
 	"math"
 	"math/big"
 
-	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/manishmeganathan/weave/utils"
 )
 
 // A value that represents the difficulty value with a max value of 255

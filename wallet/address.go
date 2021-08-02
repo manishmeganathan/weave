@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/manishmeganathan/weave/utils"
 )
 
 // A struct that represents the Address of a User/Wallet

@@ -7,8 +7,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/manishmeganathan/blockweave/utils"
-	"github.com/manishmeganathan/blockweave/wallet"
+	"github.com/manishmeganathan/weave/utils"
+	"github.com/manishmeganathan/weave/wallet"
 	"github.com/sirupsen/logrus"
 )
 

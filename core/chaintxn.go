@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/manishmeganathan/weave/utils"
 	"github.com/sirupsen/logrus"
 )
 

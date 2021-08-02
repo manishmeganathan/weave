@@ -3,10 +3,10 @@ package core
 import (
 	"encoding/gob"
 
-	"github.com/manishmeganathan/blockweave/consensus"
-	"github.com/manishmeganathan/blockweave/merkle"
-	"github.com/manishmeganathan/blockweave/utils"
-	"github.com/manishmeganathan/blockweave/wallet"
+	"github.com/manishmeganathan/weave/consensus"
+	"github.com/manishmeganathan/weave/merkle"
+	"github.com/manishmeganathan/weave/utils"
+	"github.com/manishmeganathan/weave/wallet"
 )
 
 // A structure that represents a single Block on the Blockchain

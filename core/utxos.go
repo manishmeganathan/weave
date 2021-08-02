@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 
 	"github.com/dgraph-io/badger"
-	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/manishmeganathan/weave/utils"
 	"github.com/sirupsen/logrus"
 )
 

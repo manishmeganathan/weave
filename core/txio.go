@@ -3,8 +3,8 @@ package core
 import (
 	"bytes"
 
-	"github.com/manishmeganathan/blockweave/utils"
-	"github.com/manishmeganathan/blockweave/wallet"
+	"github.com/manishmeganathan/weave/utils"
+	"github.com/manishmeganathan/weave/wallet"
 )
 
 // A structure that represents the inputs in a transaction

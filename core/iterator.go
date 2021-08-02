@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/dgraph-io/badger"
-	"github.com/manishmeganathan/blockweave/persistence"
+	"github.com/manishmeganathan/weave/persistence"
 	"github.com/sirupsen/logrus"
 )
 

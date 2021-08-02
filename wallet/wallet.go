@@ -3,7 +3,7 @@ package wallet
 import (
 	"crypto/ecdsa"
 
-	"github.com/manishmeganathan/blockweave/utils"
+	"github.com/manishmeganathan/weave/utils"
 	"github.com/sirupsen/logrus"
 )
 
