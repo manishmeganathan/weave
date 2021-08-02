@@ -48,7 +48,7 @@ func (pow *POW) GenerateTarget() {
 
 // A method of POW that runs the Proof Of Work Algorithm
 // to generate the hash of the block and mint it.
-func (pow *POW) Mint(blockheader utils.GobEncodable) error {
+func (pow *POW) Mint(blockheader utils.GobEncodable) utils.Hash {
 	// Declare a big Int version of the hash
 	var inthash big.Int
 	// Declare an slice of bytes for the hash
@@ -82,7 +82,7 @@ func (pow *POW) Mint(blockheader utils.GobEncodable) error {
 	// Print an empty line for spacing
 	fmt.Println()
 	// Return a nil error
-	return nil
+	return hash
 }
 
 // A method of POW that validates the block data for the target
