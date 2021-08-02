@@ -13,15 +13,83 @@ var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "View configuration information",
 	Long:  `View configuration information`,
-	Run:   func(cmd *cobra.Command, args []string) { print_config() },
+	Run: func(cmd *cobra.Command, args []string) {
+		// Read the configuration file into an object
+		config := utils.ReadConfigFile()
+		// Print the configuration file values
+		config.PrintConfigFile()
+	},
 }
 
 // config_showCmd represents the 'config show' command
 var config_showCmd = &cobra.Command{
 	Use:   "show",
-	Short: "Display the values from the configuration file",
-	Long:  `Display the values from the configuration file`,
-	Run:   func(cmd *cobra.Command, args []string) { print_config() },
+	Short: "Show values from the configuration file",
+	Long: `Show values from the configuration file. 
+Commands expects a value that represents the config type. 
+Valid values are 'all', 'jbok', 'db', 'blocks' and 'state'.`,
+
+	Run: func(cmd *cobra.Command, args []string) {
+		// Read the configuration file into an object
+		config := utils.ReadConfigFile()
+
+		// Check if args has elements
+		if len(args) == 0 {
+			fmt.Println("[error] no config value provided.")
+			return
+		}
+
+		// Check the show value
+		switch args[0] {
+		case "all":
+			// Print all the configuration file values
+			config.PrintConfigFile()
+
+		case "jbok":
+			// Print the JBOK configuration file values
+			fmt.Println()
+			fmt.Println("----JBOK-Configuration----")
+			fmt.Printf("JBOK File: %v\n", config.JBOK.File)
+			fmt.Printf("JBOK Default: %v\n", config.JBOK.Default)
+			fmt.Println()
+
+		case "db":
+			// Print the DB configuration file values
+			fmt.Println()
+			fmt.Println("----Database-Configuration----")
+			fmt.Printf("DB Root: %v\n", config.DB.Root)
+			fmt.Printf("DB State File: %v\n", config.DB.State.File)
+			fmt.Printf("DB State Directory: %v\n", config.DB.State.Directory)
+			fmt.Printf("DB Blocks File: %v\n", config.DB.Blocks.File)
+			fmt.Printf("DB Blocks Directory: %v\n", config.DB.Blocks.Directory)
+			fmt.Println()
+
+		case "blocks":
+			// Print the Database Blocks configuration file values
+			fmt.Println()
+			fmt.Println("----Database-Blocks-Configuration----")
+			fmt.Printf("DB Blocks File: %v\n", config.DB.Blocks.File)
+			fmt.Printf("DB Blocks Directory: %v\n", config.DB.Blocks.Directory)
+			fmt.Println()
+
+		case "state":
+			// Print the Database State configuration file values
+			fmt.Println()
+			fmt.Println("----Database-State-Configuration----")
+			fmt.Printf("DB State File: %v\n", config.DB.State.File)
+			fmt.Printf("DB State Directory: %v\n", config.DB.State.Directory)
+			fmt.Println()
+
+		case "net":
+			// Print the Network configuration file values
+			fmt.Println()
+			// fmt.Println("----Network-Configuration----")
+			// fmt.Println()
+
+		default:
+			fmt.Println("[error] invalid config value provided.")
+		}
+	},
 }
 
 // config_resetCmd represents the 'config reset' command
@@ -69,14 +137,6 @@ func generate_config(args []string) {
 	config.JBOK.Default = address
 	// Write the configuration to a file
 	config.WriteConfigFile()
-}
-
-// A function that prints the configuration file values
-func print_config() {
-	// Read the configuration file into an object
-	config := utils.ReadConfigFile()
-	// Print the configuration file values
-	config.PrintConfigFile()
 }
 
 func init() {
