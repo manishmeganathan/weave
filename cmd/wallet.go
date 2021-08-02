@@ -74,7 +74,7 @@ var wallet_listCmd = &cobra.Command{
 		// Print the addresses
 		fmt.Println("--JBOK-Wallet-Addresses--")
 		for index, addr := range addrs {
-			fmt.Printf("%d] %s\n", index, addr)
+			fmt.Printf("%d] %s\n", index+1, addr)
 		}
 
 	},
