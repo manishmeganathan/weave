@@ -53,7 +53,7 @@ func GobDecode(gobdata Gob, object interface{}) interface{} {
 	err := decoder.Decode(object)
 	if err != nil {
 		// Log a fatal error
-		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to decode Gob as object of type %T.", object)
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalf("failed to decode Gob as object of type %T.\n", object)
 	}
 
 	// Return the decoded object
