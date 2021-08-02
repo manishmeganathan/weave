@@ -68,13 +68,34 @@ var wallet_listCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// Create a new JBOK object
 		jbok := wallet.NewJBOK()
+		// Get address in the JBOK
 		addrs := jbok.GetAddresses()
 
+		// Print the addresses
 		fmt.Println("--JBOK-Wallet-Addresses--")
 		for index, addr := range addrs {
 			fmt.Printf("%d] %s\n", index, addr)
 		}
 
+	},
+}
+
+// wallet_newCmd represents the 'wallet new' command
+var wallet_newCmd = &cobra.Command{
+	Use:   "new",
+	Short: "Generate a new wallet address",
+	Long:  `Generate a new wallet address`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// Create a new JBOK object
+		jbok := wallet.NewJBOK()
+
+		// Create a new wallet
+		newwallet := wallet.NewWallet()
+		// Add the wallet to the JBOK and get the address
+		address := jbok.AddWallet(newwallet)
+
+		// Print the confirmation
+		fmt.Println("[success] new weave wallet created:", address.String)
 	},
 }
 
@@ -87,4 +108,6 @@ func init() {
 	walletCmd.AddCommand(wallet_setCmd)
 	// Add list command to wallet
 	walletCmd.AddCommand(wallet_listCmd)
+	// Add new command to wallet
+	walletCmd.AddCommand(wallet_newCmd)
 }
