@@ -82,7 +82,7 @@ func (chain *BlockChain) CollectSpendableUTXOS(publickeyhash []byte, amount int)
 	accumulated := 0
 
 	// Define a View transaction on the database
-	_ = chain.DB.Client.View(func(txn *badger.Txn) error {
+	_ = chain.State.Client.View(func(txn *badger.Txn) error {
 		// Start a database iterator with the default options
 		dbiterator := txn.NewIterator(badger.DefaultIteratorOptions)
 		// Defer the closing of the database
@@ -136,7 +136,7 @@ func (chain *BlockChain) FetchUTXOS(publickeyhash []byte) TXOList {
 	var utxos TXOList
 
 	// Define a View transaction on the database
-	_ = chain.DB.Client.View(func(txn *badger.Txn) error {
+	_ = chain.State.Client.View(func(txn *badger.Txn) error {
 		// Start a database iterator with the default options
 		dbiterator := txn.NewIterator(badger.DefaultIteratorOptions)
 		// Defer the closing of the database
@@ -180,7 +180,7 @@ func (chain *BlockChain) CountUTXOS() int {
 	counter := 0
 
 	// Define a View transaction on the database
-	_ = chain.DB.Client.View(func(txn *badger.Txn) error {
+	_ = chain.State.Client.View(func(txn *badger.Txn) error {
 		// Start a database iterator with the default options
 		dbiterator := txn.NewIterator(badger.DefaultIteratorOptions)
 		// Defer the closing of the database
@@ -203,12 +203,12 @@ func (chain *BlockChain) CountUTXOS() int {
 // all the utxo layer keys on the database.
 func (chain *BlockChain) ReindexUTXOS() {
 	// Delete all the UTXOs stored on the database
-	chain.DB.DeleteKeyPrefix(utils.UTXOprefix)
+	chain.State.DeleteKeyPrefix(utils.UTXOprefix)
 	// Accumulate all the UTXOs on the blockchain
 	utxos := chain.AccumulateUTX0S()
 
 	// Define an Update transaction on the database
-	err := chain.DB.Client.Update(func(txn *badger.Txn) error {
+	err := chain.State.Client.Update(func(txn *badger.Txn) error {
 		// Iterate over the UTXOs map
 		for txid, txolist := range utxos {
 			// Decode the transaction ID
@@ -243,7 +243,7 @@ func (chain *BlockChain) ReindexUTXOS() {
 // from the transaction of a Block, given the block.
 func (chain *BlockChain) UpdateUTXOS(block *Block) {
 	// Define an Update transaction on the database
-	err := chain.DB.Client.Update(func(dbtxn *badger.Txn) error {
+	err := chain.State.Client.Update(func(dbtxn *badger.Txn) error {
 		// Iterate over the transactions in the block
 		for _, txn := range block.TXList {
 			// Verify that transaction is not a coinbase

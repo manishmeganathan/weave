@@ -10,14 +10,19 @@ import (
 
 // A structure that represents an Iterator for the BlockChain
 type BlockChainIterator struct {
-	Cursor   []byte                      // Represents the hash of the block that the iterator is currently on
-	Database *persistence.DatabaseClient // Represents the reference to the chain database
+	// Represents the hash of the block that the iterator is currently on
+	Cursor []byte
+	// Represents the reference to the chain blocks database bucket
+	Database *persistence.DatabaseBucket
 }
 
 // A constructor function that generates and returns an iterator for the BlockChain
 func NewIterator(chain *BlockChain) *BlockChainIterator {
-	// Assign the values of the BlockChainIterator and return it
-	return &BlockChainIterator{Cursor: chain.ChainHead, Database: chain.DB}
+	// Assign the values of the BlockChainIterator from the chain and return it
+	return &BlockChainIterator{
+		Cursor:   chain.ChainHead,
+		Database: chain.Blocks,
+	}
 }
 
 // A method of BlockChainIterator that iterates over chain and returns the
