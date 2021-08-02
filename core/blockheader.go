@@ -4,19 +4,14 @@ import (
 	"encoding/gob"
 	"time"
 
+	"github.com/manishmeganathan/blockweave/consensus"
 	"github.com/manishmeganathan/blockweave/utils"
 )
-
-// An interface for all types of consensus headers
-type ConsensusHeader interface {
-	Mint(utils.GobEncodable) utils.Hash
-	Validate(utils.GobEncodable) bool
-}
 
 // A structure that represents the header of a Block
 type BlockHeader struct {
 	// Represents the consensus parameters of the Block
-	ConsensusHeader
+	consensus.ConsensusHeader
 
 	// Represents the hash of the previous Block
 	Priori utils.Hash
@@ -59,6 +54,8 @@ func (bh *BlockHeader) Serialize() utils.Gob {
 
 // A method that decodes a gob of bytes into the BlockHeader struct
 func (bh *BlockHeader) Deserialize(gobdata utils.Gob) {
+	// Register the gob library with the Consensus Header type
+	gob.Register(bh.ConsensusHeader)
 	// Decode the gob data into the blockheader
 	utils.GobDecode(gobdata, bh)
 }

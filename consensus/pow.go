@@ -12,6 +12,14 @@ import (
 // Currently fixed but eventually will change based on the network hashrate.
 var WorkDifficulty uint8 = 20
 
+// An interface for all types of consensus headers
+type ConsensusHeader interface {
+	// A method that signs the header and returns the hash
+	Mint(utils.GobEncodable) utils.Hash
+	// A method that returns the validity of the signature
+	Validate(utils.GobEncodable) bool
+}
+
 // A structure that represents the Proof Of Work consensus
 // header that implements the ConsensusHeader interface
 type POW struct {
