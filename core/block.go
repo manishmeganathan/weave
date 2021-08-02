@@ -1,6 +1,8 @@
 package core
 
 import (
+	"encoding/gob"
+
 	"github.com/manishmeganathan/blockweave/consensus"
 	"github.com/manishmeganathan/blockweave/merkle"
 	"github.com/manishmeganathan/blockweave/utils"
@@ -67,14 +69,29 @@ func NewBlock(merkletree *merkle.MerkleTree, priori utils.Hash, height int, orig
 	return &block
 }
 
+// A construcor function that generates and returns a null Block
+// This a temporary constructor until a deeper integration with the consensus package is implemented.
+func NullBlock() *Block {
+	// Create an empty block object
+	block := &Block{}
+	// Set the consensus header to null pow block
+	block.BlockHeader.ConsensusHeader = consensus.NewPOW()
+	// Return the block
+	return block
+}
+
 // A method that returns the gob encoded data of the Block
 func (block *Block) Serialize() utils.Gob {
+	// Register the gob library with the Consensus Header type
+	gob.Register(block.BlockHeader.ConsensusHeader)
 	// Encode the block as a gob and return it
 	return utils.GobEncode(block)
 }
 
 // A method that decodes a gob of bytes into the Block struct
 func (block *Block) Deserialize(gobdata utils.Gob) {
+	// Register the gob library with the Consensus Header type
+	gob.Register(block.BlockHeader.ConsensusHeader)
 	// Decode the gob data into the block
 	utils.GobDecode(gobdata, block)
 }
