@@ -152,6 +152,18 @@ func GenerateConfigFile(write bool) *Config {
 	return &defaultconfig
 }
 
+// A function that removes the config file.
+func RemoveConfigFile() {
+	// Get the path to the config file.
+	file := getconfigfilepath()
+	// Remove the file
+	err := os.Remove(file)
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to remove config file.")
+	}
+}
+
 // A method of Config that write the config data to the file.
 // If the file already exists, it will be overwritten.
 func (config *Config) WriteConfigFile() error {
