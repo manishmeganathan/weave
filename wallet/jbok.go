@@ -91,6 +91,18 @@ func (jbok *JBOK) Save() {
 	}
 }
 
+// A function that purges the JBOK data file by deleting it.
+func PurgeJBOK() {
+	// Get the path to the jbok file
+	file := getjbokfilepath()
+	// Remove the JBOK file
+	err := os.Remove(file)
+	if err != nil {
+		// Log a fatal error
+		logrus.WithFields(logrus.Fields{"error": err}).Fatalln("failed to purge jbok data file.")
+	}
+}
+
 // A method of JBOK that retrieves the addresses of all wallets in the JBOK.
 func (jbok *JBOK) GetAddresses() []string {
 	// Declare a slice of strings
@@ -142,4 +154,12 @@ func (jbok *JBOK) CheckWallet(address string) bool {
 	_, ok := jbok.Wallets[address]
 	// Return the result of the check
 	return ok
+}
+
+// A method of JBOK that removes a wallet from the JBOK.
+func (jbok *JBOK) RemoveWallet(address string) {
+	// Remove the wallet from the JBOK
+	delete(jbok.Wallets, address)
+	// Save the JBOK to the file
+	jbok.Save()
 }
