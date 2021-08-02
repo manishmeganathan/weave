@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/gob"
 	"time"
 
 	"github.com/manishmeganathan/blockweave/utils"
@@ -8,7 +9,7 @@ import (
 
 // An interface for all types of consensus headers
 type ConsensusHeader interface {
-	Mint(utils.GobEncodable) error
+	Mint(utils.GobEncodable) utils.Hash
 	Validate(utils.GobEncodable) bool
 }
 
@@ -50,6 +51,8 @@ func NewBlockHeader(priori, root utils.Hash) *BlockHeader {
 
 // A method that returns the gob encoded data of the BlockHeader
 func (bh *BlockHeader) Serialize() utils.Gob {
+	// Register the gob library with the Consensus Header type
+	gob.Register(bh.ConsensusHeader)
 	// Encode the blockheader as a gob and return it
 	return utils.GobEncode(bh)
 }
