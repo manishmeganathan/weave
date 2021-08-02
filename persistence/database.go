@@ -14,12 +14,12 @@ import (
 )
 
 // A type alias that represents a type of database bucket
-type Bucket uint8
+type Bucket uint32
 
 // A set of constants that represent valids types of database buckets
 const (
-	STATE  Bucket = 0
-	BLOCKS Bucket = 1
+	STATE Bucket = iota
+	BLOCKS
 )
 
 // A struct that represents the client for a database bucket
