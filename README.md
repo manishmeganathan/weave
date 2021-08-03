@@ -1,2 +1,2 @@
-# Blockweave
-## A Blockchain implementation in Go using libp2p/SHA3 and BadgerDB
+# Weave
+## An implementation of a blockchain network that implements P2P networking, local persistence, transaction merkle trees, memory pooling and a proof-of-work consensus layer.
