@@ -1,0 +1,99 @@
+syntax = "proto3";
+option go_package = ".;protos";
+
+import "protos/entity.proto";
+
+// Documentation included in the protos/README.md file.
+// Code generation for Go files can done with 'make proto-response'.
+
+// A message for a Block query response
+message BlockResponse {
+    // PeerID of the peer that sent the response
+    string peerid = 1;
+    // Response block data
+    Block block = 2;
+}
+
+// A message for a Transaction query response
+message TxnResponse {
+    // PeerID of the peer that sent the response
+    string peerid = 1;
+    // Response transaction data
+    Txn txn = 2;
+}
+
+// A message for a State query response
+message StateResponse {
+    // A message for the miner configuration state
+    message MinerConfig {
+        // Size of the miner transaction memory pool.
+        // This value determines how many transactions included in a block.
+        uint32 poolsize = 1;
+        // Difficulty of the proof-of-work algorithm.
+        // This value determines the target number of leading zeros in a block hash.
+        uint32 difficulty = 2;
+        // Reward for mining a block.
+        // This value determines the reward for mining a block.
+        uint32 reward = 3;
+    }
+
+    // PeerID of the peer that sent the response
+    string peerid = 1;
+    // Height of the chain on the peer that sent the response
+    uint32 chainheight = 2;
+    // Miner configuration state of the peer that sent the response
+    MinerConfig minerconfig = 3;
+}
+
+// A message for an Inventory query response
+message InventoryResponse {
+    // PeerID of the peer that sent the response
+    string peerid = 1;
+    // List of blocks on the chain of the peer that sent the response.
+    // The included blocks are from the highest block on the peer's chain
+    // upto the last block available on the requesting peer (taken from query).
+    repeated Block chainblocks = 2;
+    // List of transactions in the mempool of the peer that sent the response. The transactions
+    // are included based on if the requesting peer has asked for it (taken from query).
+    repeated Txn pooltxns = 3;
+}
+
+// A message for a Status query response
+message StatusResponse {
+    // PeerID of the peer that sent the response
+    string peerid = 1;
+    // Type of entity for which status is being returned
+    entitytype type = 2;
+    // Hash of the entity for which status is being returned
+    bytes entityhash = 3;
+    // Status of the entity
+    string status = 4;
+}
+
+// A message for an arbitrary query response
+message Response {
+    // Enumeration of response types
+    enum responsetype {
+        TXN = 0;
+        BLOCK = 1;
+        STATE = 2;
+        STATUS = 3;
+        INVENTORY = 4;
+    }
+
+    // Type of response
+    responsetype type = 1;
+    // Body of response
+    oneof body {
+        // Type must be TXN
+        TxnResponse txnresponse = 2;
+        // Type must be BLOCK
+        BlockResponse blockresponse = 3;
+        // Type must be STATE
+        StateResponse stateresponse = 4;
+        // Type must be STATUS
+        StatusResponse statusresponse = 5;
+        // Type must be INVENTORY
+        InventoryResponse inventoryresponse = 6;
+    }
+}
