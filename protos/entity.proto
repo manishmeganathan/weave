@@ -1,0 +1,42 @@
+syntax = "proto3";
+option go_package = ".;protos";
+
+// Documentation included in the protos/README.md file.
+// Code generation for Go files can done with 'make proto-entity'.
+
+// Enumeration of entity types
+enum entitytype {
+    TXN = 0;
+    BLOCK = 1;
+}
+
+// A message for Block entity data
+message Block {
+    // Hash of the Block
+    bytes blockhash = 1;
+    // Data of the Block
+    // Must decode to a weave.core.Block object
+    bytes blockdata = 2;
+}
+
+// A message for Transaction entity data
+message Txn {
+    // Hash of the Transaction
+    bytes txnhash = 1;
+    // Data of the Transaction
+    // Must decode to a weave.core.Transaction object
+    bytes txndata = 2;
+}
+
+// A message for an arbritary entity
+message Entity {
+    // Type of the entity
+    entitytype type = 1;
+    // Data of the entity
+    oneof entity {
+        // Type must be BLOCK
+        Block block = 2;
+        // Type must be TXN
+        Txn txn = 3;
+    }
+}
