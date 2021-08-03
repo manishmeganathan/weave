@@ -1,0 +1,80 @@
+syntax = "proto3";
+option go_package = ".;protos";
+
+import "protos/entity.proto";
+
+// Documentation included in the protos/README.md file.
+// Code generation for Go files can done with 'make proto-query'.
+
+// A message for a Block data query
+message BlockQuery {
+    // PeerID of the peer that sent the query
+    string peerid = 1;
+    // Hash of the query block
+    bytes blockhash = 2;
+}
+
+// A message for a Transaction data query
+message TxnQuery {
+    // PeerID of the peer that sent the query
+    string peerid = 1;
+    // Hash of the query transaction
+    bytes txnhash = 2;
+}
+
+// A message for a State query
+message StateQuery {
+    // PeerID of the peer that sent the query
+    string peerid = 1;
+    // Whether to include the minerconfig
+    bool minerconfig = 2;
+}
+
+// A message for Inventory data query
+message InventoryQuery {
+    // PeerID of the peer that sent the query
+    string peerid = 1;
+    // Height of the last block to include. This value represents the 
+    // height of the last block available to the peer making the request
+    uint32 lastblock = 2;
+    // Whether to include pool transactions
+    bool pooltxns = 3;
+}
+
+// A message for Status data query
+message StatusQuery {
+    // PeerID of the peer that sent the query
+    string peerid = 1;
+    // Type of entity for which to check status
+    entitytype type = 2;
+    // Hash of the entity for which to check status
+    bytes entityhash = 3;
+}
+
+// A message for an arbitrary data query
+message Query {
+    // Enumeration of query types
+    enum querytype {
+        TXN = 0;
+        BLOCK = 1;
+        STATE = 2;
+        STATUS = 3;
+        INVENTORY = 4;
+    }
+
+    // Type of query
+    querytype type = 1;
+    // Body of query
+    oneof body {
+        // Type must be TXN
+        TxnQuery txn = 2;
+        // Type must be BLOCK
+        BlockQuery block = 3;
+        // Type must be STATE
+        StateQuery state = 4;
+        // Type must be STATUS
+        StatusQuery status = 5;
+        // Type must be INVENTORY
+        InventoryQuery inventory = 6;
+    }
+}
