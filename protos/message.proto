@@ -1,0 +1,33 @@
+syntax = "proto3";
+option go_package = ".;protos";
+
+import "protos/entity.proto";
+import "protos/query.proto";
+import "protos/response.proto";
+
+// Documentation included in the protos/README.md file.
+// Code generation for Go files can done with 'make proto-message'.
+// Code generation for Go files for all protos can done with 'make protos'.
+
+// An arbitary message sent between two peers on the network.
+// This message wraps any possible underlying message.
+message Message{
+    // Enumeration of message types
+    enum msgtype {
+        QUERY = 0;
+        ENTITY = 1;
+        RESPONSE = 2;
+    }
+
+    // Type of the message
+    msgtype type = 1;
+    // Body of the message
+    oneof message {
+        // Type must be QUERY
+        Query query = 2;
+        // Type must be ENTITY
+        Entity entity = 3;
+        // Type must be RESPONSE
+        Response response = 4;
+    }
+}
