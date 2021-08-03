@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"math/rand"
+	"os"
 	"time"
 
-	"github.com/manishmeganathan/weave/utils"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -28,5 +29,20 @@ func init() {
 	// Seed the random library
 	rand.Seed(time.Now().UTC().UnixNano())
 	// Setup logger
-	utils.LogInitialize(4)
+	intializelogger(4)
+}
+
+// A function that initializes the log level, formatter and output
+func intializelogger(loglevel logrus.Level) {
+	// Log as JSON instead of the default ASCII formatter.
+	logrus.SetFormatter(&logrus.TextFormatter{
+		ForceColors: true,
+	})
+
+	// Output to stdout instead of the default stderr
+	// Can be any io.Writer, see below for File example
+	logrus.SetOutput(os.Stdout)
+
+	// Only log the specified level or above.
+	logrus.SetLevel(loglevel)
 }
