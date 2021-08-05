@@ -1,6 +1,7 @@
 package persistence
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -54,4 +55,50 @@ func NewMemPool(poolsize uint, enable_events bool) *MemPool {
 
 	// Return the new pool
 	return pool
+}
+
+// A method of MemPool that returns the event channel for the pool
+func (pool *MemPool) GetEventChannel() chan PoolEvent {
+	return pool.eventchan
+}
+
+// A method of MemPool that reports whether the pool is full
+func (pool *MemPool) IsFull() bool {
+	return pool.Count >= pool.size
+}
+
+// A method of MemPool that reports whether the pool is empty
+func (pool *MemPool) IsEmpty() bool {
+	return pool.Count == 0
+}
+
+// A method of MemPool that adds an object to the pool which is addressable by the given key.
+// Returns an error if the pool is full. If an object exists for the key, it is overwritten.
+func (pool *MemPool) Put(key string, object interface{}) error {
+	// Acquire the lock on the pool
+	pool.mutex.Lock()
+	defer pool.mutex.Unlock()
+
+	// Check if the pool is full
+	if pool.IsFull() {
+		// Return an error
+		return fmt.Errorf("pool is full")
+	}
+
+	// Increment the pool count
+	pool.Count++
+	// Add the object to the pool
+	pool.pool[key] = object
+
+	// Check if the pool is full
+	if pool.IsFull() {
+		// Check if the event handler is initalized
+		if pool.eventchan != nil {
+			// Send a pool full event
+			pool.eventchan <- POOLFULL
+		}
+	}
+
+	// Return nil error
+	return nil
 }
