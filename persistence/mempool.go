@@ -151,3 +151,46 @@ func (pool *MemPool) Pop(key string) (interface{}, bool) {
 	// Return the object and a boolean that indicates whether the object exists in the pool
 	return object, ok
 }
+
+// A method of MemPool that purges the pool of all objects.
+func (pool *MemPool) Purge() {
+	// Acquire the lock on the pool
+	pool.mutex.Lock()
+	defer pool.mutex.Unlock()
+
+	// Reset the pool map
+	pool.pool = make(map[string]interface{})
+
+	// Check if the event handler is initalized
+	if pool.eventchan != nil {
+		// Send a pool purge event and pool empty event
+		pool.eventchan <- POOLPURGE
+		pool.eventchan <- POOLEMPTY
+	}
+}
+
+// A method of MemPool that resizes the pool for the new size limit.
+// Returns an error if there are more object in the pool than the new size limit.
+func (pool *MemPool) Resize(newsize uint) error {
+	// Acquire the lock on the pool
+	pool.mutex.Lock()
+	defer pool.mutex.Unlock()
+
+	// Check if the new size limit is less than the current count of the pool
+	if newsize < pool.Count {
+		// Return an error
+		return fmt.Errorf("cannot resize pool to smaller size than the current number of elements")
+	}
+
+	// Modify the size of the pool
+	pool.size = newsize
+
+	// Check if the event handler is initalized
+	if pool.eventchan != nil {
+		// Send a pool resize event
+		pool.eventchan <- POOLRESIZE
+	}
+
+	// Return nil error
+	return nil
+}
