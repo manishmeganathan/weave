@@ -102,3 +102,52 @@ func (pool *MemPool) Put(key string, object interface{}) error {
 	// Return nil error
 	return nil
 }
+
+// A method of MemPool that returns the object that is addressable by the given key.
+// Returns the object and a boolean that indicates whether the object exists in the pool.
+func (pool *MemPool) Get(key string) (interface{}, bool) {
+	// Acquire the lock on the pool
+	pool.mutex.Lock()
+	defer pool.mutex.Unlock()
+
+	// Retrieve the object from the pool
+	object, ok := pool.pool[key]
+	// Return the object and a boolean that indicates whether the object exists in the pool
+	return object, ok
+}
+
+// A method of MemPool that removes the object that is addressable by the given key.
+func (pool *MemPool) Remove(key string) {
+	// Acquire the lock on the pool
+	pool.mutex.Lock()
+	defer pool.mutex.Unlock()
+
+	// Remove the object from the pool
+	delete(pool.pool, key)
+	// Update the count of the pool
+	pool.Count = uint(len(pool.pool))
+
+	// Check if the pool is empty
+	if pool.IsEmpty() {
+		// Check if the event handler is initalized
+		if pool.eventchan != nil {
+			// Send a pool empty event
+			pool.eventchan <- POOLEMPTY
+		}
+	}
+}
+
+// A method of MemPool that retrieves the object that is addressable by the given key and removes it from the pool.
+// Returns the object and a boolean that indicates whether the object exists in the pool.
+func (pool *MemPool) Pop(key string) (interface{}, bool) {
+	// Retrieve the object from the pool and the boolean that indicates whether the object exists in the pool
+	object, ok := pool.Get(key)
+	// Check if the object exists in the pool
+	if ok {
+		// Remove the object from the pool
+		pool.Remove(key)
+	}
+
+	// Return the object and a boolean that indicates whether the object exists in the pool
+	return object, ok
+}
