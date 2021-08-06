@@ -21,13 +21,15 @@ message Message{
 
     // Type of the message
     msgtype type = 1;
+    // PeerID of the sender
+    string peerid = 2;
     // Body of the message
     oneof message {
         // Type must be QUERY
-        Query query = 2;
+        Query query = 3;
         // Type must be ENTITY
-        Entity entity = 3;
+        Entity entity = 4;
         // Type must be RESPONSE
-        Response response = 4;
+        Response response = 5;
     }
 }

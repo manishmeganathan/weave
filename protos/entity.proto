@@ -8,6 +8,7 @@ option go_package = ".;protos";
 enum entitytype {
     TXN = 0;
     BLOCK = 1;
+    MINERCONFIG = 2;
 }
 
 // A message for Block entity data
@@ -28,6 +29,19 @@ message Txn {
     bytes txndata = 2;
 }
 
+// A message for the miner configuration values
+message MinerConfig {
+    // Size of the miner transaction memory pool.
+    // This value determines how many transactions included in a block.
+    uint32 poolsize = 1;
+    // Difficulty of the proof-of-work algorithm.
+    // This value determines the target number of leading zeros in a block hash.
+    uint32 difficulty = 2;
+    // Reward for mining a block.
+    // This value determines the reward for mining a block.
+    uint32 reward = 3;
+}
+
 // A message for an arbritary entity
 message Entity {
     // Type of the entity
@@ -38,5 +52,7 @@ message Entity {
         Block block = 2;
         // Type must be TXN
         Txn txn = 3;
+        // Type must be MINERCONFIG
+        MinerConfig minerconfig = 4;
     }
 }

@@ -8,66 +8,43 @@ import "protos/entity.proto";
 
 // A message for a Block query response
 message BlockResponse {
-    // PeerID of the peer that sent the response
-    string peerid = 1;
     // Response block data
-    Block block = 2;
+    Block block = 1;
 }
 
 // A message for a Transaction query response
 message TxnResponse {
-    // PeerID of the peer that sent the response
-    string peerid = 1;
     // Response transaction data
-    Txn txn = 2;
+    Txn txn = 1;
 }
 
 // A message for a State query response
 message StateResponse {
-    // A message for the miner configuration state
-    message MinerConfig {
-        // Size of the miner transaction memory pool.
-        // This value determines how many transactions included in a block.
-        uint32 poolsize = 1;
-        // Difficulty of the proof-of-work algorithm.
-        // This value determines the target number of leading zeros in a block hash.
-        uint32 difficulty = 2;
-        // Reward for mining a block.
-        // This value determines the reward for mining a block.
-        uint32 reward = 3;
-    }
-
-    // PeerID of the peer that sent the response
-    string peerid = 1;
     // Height of the chain on the peer that sent the response
-    uint32 chainheight = 2;
+    uint32 chainheight = 1;
     // Miner configuration state of the peer that sent the response
-    MinerConfig minerconfig = 3;
+    MinerConfig minerconfig = 2;
 }
 
 // A message for an Inventory query response
 message InventoryResponse {
-    // PeerID of the peer that sent the response
-    string peerid = 1;
     // List of blocks on the chain of the peer that sent the response.
     // The included blocks are from the highest block on the peer's chain
     // upto the last block available on the requesting peer (taken from query).
-    repeated Block chainblocks = 2;
+    repeated Block chainblocks = 1;
     // List of transactions in the mempool of the peer that sent the response. The transactions
     // are included based on if the requesting peer has asked for it (taken from query).
-    repeated Txn pooltxns = 3;
+    repeated Txn pooltxns = 2;
 }
 
 // A message for a Status query response
 message StatusResponse {
-    // PeerID of the peer that sent the response
-    string peerid = 1;
     // Type of entity for which status is being returned
-    entitytype type = 2;
+    entitytype type = 1;
     // Hash of the entity for which status is being returned
-    bytes entityhash = 3;
+    bytes entityhash = 2;
     // Status of the entity
-    string status = 4;
+    string status = 3;
 }
 
 // A message for an arbitrary query response

@@ -8,47 +8,37 @@ import "protos/entity.proto";
 
 // A message for a Block data query
 message BlockQuery {
-    // PeerID of the peer that sent the query
-    string peerid = 1;
     // Hash of the query block
-    bytes blockhash = 2;
+    bytes blockhash = 1;
 }
 
 // A message for a Transaction data query
 message TxnQuery {
-    // PeerID of the peer that sent the query
-    string peerid = 1;
     // Hash of the query transaction
-    bytes txnhash = 2;
+    bytes txnhash = 1;
 }
 
 // A message for a State query
 message StateQuery {
-    // PeerID of the peer that sent the query
-    string peerid = 1;
     // Whether to include the minerconfig
-    bool minerconfig = 2;
+    bool minerconfig = 1;
 }
 
 // A message for Inventory data query
 message InventoryQuery {
-    // PeerID of the peer that sent the query
-    string peerid = 1;
     // Height of the last block to include. This value represents the 
     // height of the last block available to the peer making the request
-    uint32 lastblock = 2;
+    uint32 lastblock = 1;
     // Whether to include pool transactions
-    bool pooltxns = 3;
+    bool pooltxns = 2;
 }
 
 // A message for Status data query
 message StatusQuery {
-    // PeerID of the peer that sent the query
-    string peerid = 1;
     // Type of entity for which to check status
-    entitytype type = 2;
+    entitytype type = 1;
     // Hash of the entity for which to check status
-    bytes entityhash = 3;
+    bytes entityhash = 2;
 }
 
 // A message for an arbitrary data query
